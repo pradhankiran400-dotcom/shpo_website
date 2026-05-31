@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ shop_name }} - Premium Grains & Pulses</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+</head>
+<body>
+    <!-- Top Decorative Bar -->
+    <div class="top-bar">
+        <span>✨ Quality you can taste, trust you can feel. Direct from farm to your kitchen! ✨</span>
+    </div>
+
+    <!-- Navigation Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="#" class="logo">
+                <div class="logo-icon">🌾</div>
+                <div class="logo-text">
+                    <h1>Maa Bankeswari</h1>
+                    <span>Rice Store</span>
+                </div>
+            </a>
+
+            <!-- Search Bar in Header -->
+            <div class="search-container">
+                <i data-lucide="search" class="search-icon"></i>
+                <input type="text" id="search-input" placeholder="Search premium rice, dals...">
+            </div>
+
+            <!-- Header Actions -->
+            <div class="header-actions">
+                <button class="cart-toggle-btn" id="cart-toggle">
+                    <div class="cart-icon-wrapper">
+                        <i data-lucide="shopping-basket"></i>
+                        <span class="cart-badge" id="cart-badge-count">0</span>
+                    </div>
+                    <span class="cart-btn-text">My Cart</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <span class="hero-subtitle">Est. 2012 — Purest Grade Grains</span>
+                <h2 class="hero-title">Bringing Nourishment & Tradition To Your Home</h2>
+                <p class="hero-description">
+                    At <strong>Maa Bankeswari Rice Store</strong>, we handpick the finest varieties of aromatic basmati, daily-grade rice, and unpolished, protein-rich dals. Experience culinary perfection.
+                </p>
+                <div class="hero-features">
+                    <div class="feature-tag">
+                        <i data-lucide="shield-check"></i>
+                        <span>100% Pure & Hygienic</span>
+                    </div>
+                    <div class="feature-tag">
+                        <i data-lucide="leaf"></i>
+                        <span>Naturally Sourced</span>
+                    </div>
+                    <div class="feature-tag">
+                        <i data-lucide="award"></i>
+                        <span>Premium Grade Only</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Catalog Container -->
+        <section class="catalog-section">
+            <div class="catalog-header">
+                <div class="title-area">
+                    <h3 class="section-title">Explore Our Premium Catalog</h3>
+                    <p class="section-subtitle">Sourced with love, processed with care.</p>
+                </div>
+                <!-- Filter Tabs -->
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-category="all">All Grains</button>
+                    <button class="filter-tab" data-category="rice">
+                        <span>🌾</span> Premium Rice
+                    </button>
+                    <button class="filter-tab" data-category="dal">
+                        <span>🍲</span> Nutritious Dals
+                    </button>
+                </div>
+            </div>
+
+            <!-- Empty State Search -->
+            <div class="no-results" id="no-results-view" style="display: none;">
+                <i data-lucide="package-search"></i>
+                <h4>No items found matching your search</h4>
+                <p>Try searching for "rice", "dal", or check spelling.</p>
+                <button class="btn btn-outline" id="clear-search-btn">Show All Products</button>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="products-grid" id="products-grid">
+                {% for product in products %}
+                <div class="product-card" data-category="{{ product.category }}" data-name="{{ product.name | lower }}">
+                    <div class="product-image-container">
+                        {% if product.badge %}
+                        <span class="product-badge">{{ product.badge }}</span>
+                        {% endif %}
+                        <img src="{{ product.image_path }}" alt="{{ product.name }}" class="product-image" loading="lazy">
+                        <div class="product-image-overlay"></div>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category-tag">
+                            {% if product.category == 'rice' %}🌾 Rice{% else %}🍲 Dal & Pulses{% endif %}
+                        </span>
+                        <h4 class="product-title">{{ product.name }}</h4>
+                        <p class="product-description">{{ product.description }}</p>
+                        <div class="product-meta">
+                            <div class="product-price-wrapper">
+                                <span class="currency">₹</span>
+                                <span class="price-val">{{ product.price }}</span>
+                                <span class="unit">/ {{ product.unit }}</span>
+                            </div>
+                            <button class="add-to-cart-btn" 
+                                    data-id="{{ product.id }}"
+                                    data-name="{{ product.name }}"
+                                    data-price="{{ product.price }}"
+                                    data-image="{{ product.image_path }}"
+                                    data-unit="{{ product.unit }}">
+                                <i data-lucide="plus"></i>
+                                <span>Add</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Our Promises Info Cards -->
+        <section class="promises-section">
+            <div class="promise-card">
+                <div class="promise-icon"><i data-lucide="truck"></i></div>
+                <h5>Superfast Local Delivery</h5>
+                <p>Get delivery to your doorstep within hours in our local store zones.</p>
+            </div>
+            <div class="promise-card">
+                <div class="promise-icon"><i data-lucide="thumbs-up"></i></div>
+                <h5>Uncompromising Quality</h5>
+                <p>Every single grain passes through 3-tier filtration and quality inspection.</p>
+            </div>
+            <div class="promise-card">
+                <div class="promise-icon"><i data-lucide="check-circle"></i></div>
+                <h5>Wholesale Rates</h5>
+                <p>Enjoy the best competitive market prices direct from milling suppliers.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Cart Drawer (Slides in from right) -->
+    <div class="cart-drawer-overlay" id="cart-overlay"></div>
+    <div class="cart-drawer" id="cart-drawer">
+        <div class="cart-header">
+            <div class="cart-header-title">
+                <i data-lucide="shopping-cart"></i>
+                <h3>Your Basket</h3>
+                <span class="cart-count-badge" id="cart-count-title">0 items</span>
+            </div>
+            <button class="close-cart-btn" id="close-cart">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="cart-body">
+            <!-- Empty Basket View -->
+            <div class="cart-empty-state" id="cart-empty">
+                <div class="empty-icon">🌾</div>
+                <h4>Your basket is empty</h4>
+                <p>Add some premium rice or nutrient-dense dals to kickstart your healthy meals!</p>
+                <button class="btn btn-primary" id="start-shopping">Start Shopping</button>
+            </div>
+
+            <!-- Cart Items List -->
+            <div class="cart-items-list" id="cart-items-container" style="display: none;">
+                <!-- Dynamically populated via JS -->
+            </div>
+        </div>
+
+        <!-- Cart Footer (Sticky at bottom) -->
+        <div class="cart-footer" id="cart-footer-view" style="display: none;">
+            <div class="bill-details">
+                <div class="bill-row">
+                    <span>Subtotal</span>
+                    <span>₹<span id="cart-subtotal">0.00</span></span>
+                </div>
+                <div class="bill-row">
+                    <span>Store Delivery</span>
+                    <span class="free-delivery">FREE</span>
+                </div>
+                <hr class="bill-divider">
+                <div class="bill-row total-row">
+                    <span>Total Bill</span>
+                    <span>₹<span id="cart-total">0.00</span></span>
+                </div>
+            </div>
+            <button class="checkout-btn" id="checkout-btn">
+                <span>Proceed to Checkout</span>
+                <i data-lucide="arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Success Notification Toast -->
+    <div class="toast-notification" id="toast-notify">
+        <i data-lucide="check-circle" class="toast-icon"></i>
+        <span class="toast-message" id="toast-message">Item added to cart!</span>
+    </div>
+
+    <!-- Checkout Success Modal -->
+    <div class="modal-overlay" id="checkout-modal">
+        <div class="modal-content">
+            <div class="modal-success-icon">
+                <i data-lucide="badge-check"></i>
+            </div>
+            <h3>Order Placed Successfully!</h3>
+            <p>Thank you for shopping with <strong>Maa Bankeswari Rice Store</strong>. We are preparing your order of premium grains. Our team will contact you shortly for delivery confirmation.</p>
+            <div class="order-summary-box">
+                <div class="summary-header">Order Summary</div>
+                <div id="modal-order-items"></div>
+                <hr>
+                <div class="summary-total">Total Bill: <strong>₹<span id="modal-total-price">0.00</span></strong></div>
+            </div>
+            <button class="btn btn-primary" id="close-modal-btn">Continue Shopping</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="footer-logo">🌾 Maa Bankeswari Rice Store</div>
+                <p>Purest traditional grains, dals, and kitchen staples curated for health-conscious families. Taste the authenticity of farm-fresh harvests.</p>
+            </div>
+            <div class="footer-links">
+                <h6>Quick Links</h6>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Products Catalog</a></li>
+                    <li><a href="#">Wholesale Inquiries</a></li>
+                    <li><a href="#">Delivery Information</a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h6>Contact Store</h6>
+                <!-- 7RV7+FW6, Indradhanu Market, IRC Village, Nayapalli, Bhubaneswar, Odisha 751015 -->
+                <p><i data-lucide="map-pin"></i> Indradhanu Market, IRC Village, Nayapalli, Bhubaneswar, Odisha 751015</p>
+                <p><i data-lucide="phone"></i> +91 9776400523 / +91 674 234567</p>
+                <p><i data-lucide="mail"></i> info@maabankeswariricestore.com</p>
+                <p>
+                    <a href="https://maps.app.goo.gl/j1gMcbk35XPBAseZA" target="_blank" style="color: #3550ea; font-weight: 500; text-decoration: none;">
+                            📍Open in Google Maps
+                    </a>
+                </p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Maa Bankeswari Rice Store. All Rights Reserved. Crafted with love for pure food.</p>
+        </div>
+    </footer>
+
+    <!-- Javascript -->
+    <script src="/static/js/app.js"></script>
+    <script>
+        // Initialize lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
