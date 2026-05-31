@@ -103,7 +103,7 @@ def add_new_product(product_data: ProductCreate, db: Session = Depends(get_db)):
         description=product_data.description,
         price=product_data.price,
         unit=product_data.unit,
-        image_path=product_data.image_path,
+        image_url=product_data.image_path,
         in_stock=product_data.in_stock,
         badge=product_data.badge
     )
