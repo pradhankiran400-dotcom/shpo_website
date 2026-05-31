@@ -18,5 +18,15 @@
         "image_path": "/media/profile_pics/organic_moong_dal.png",
         "in_stock": true,
         "badge": ""
+    },
+    {
+        "name": "Premium Toor Dal",
+        "category": "dal",
+        "description": "Unpolished, 100% natural, and protein-rich Premium Toor Dal. Best for daily healthy meals.",
+        "price": 160.0,
+        "unit": "kg",
+        "image_path": "/media/profile_pics/premium_toor_dal.png",
+        "in_stock": true,
+        "badge": "High Protein"
     }
 ]

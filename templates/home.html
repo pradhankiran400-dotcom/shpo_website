@@ -118,7 +118,7 @@
                     </div>
                     <div class="product-info">
                         <span class="product-category-tag">
-                            {% if product.category == 'rice' %}🌾 Rice{% else %}🍲{% endif %}
+                            {% if product.category == 'rice' %}🌾 Rice{% else %}🍲 Pulses / Dal{% endif %}
                         </span>
                         <h4 class="product-title">{{ product.name }}</h4>
                         <p class="product-description">{{ product.description }}</p>
@@ -128,15 +128,18 @@
                                 <span class="price-val">{{ product.price }}</span>
                                 <span class="unit">/ {{ product.unit }}</span>
                             </div>
-                            <button class="add-to-cart-btn" 
-                                    data-id="{{ product.id }}"
-                                    data-name="{{ product.name }}"
-                                    data-price="{{ product.price }}"
-                                    data-image="{{ product.image_path }}"
-                                    data-unit="{{ product.unit }}">
-                                <i data-lucide="plus"></i>
-                                <span>Add</span>
-                            </button>
+                            <div class="product-action-container" 
+                                 id="action-{{ product.id }}"
+                                 data-id="{{ product.id }}"
+                                 data-name="{{ product.name }}"
+                                 data-price="{{ product.price }}"
+                                 data-image="{{ product.image_path }}"
+                                 data-unit="{{ product.unit }}">
+                                <button class="add-to-cart-btn">
+                                    <i data-lucide="plus"></i>
+                                    <span>Add</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
