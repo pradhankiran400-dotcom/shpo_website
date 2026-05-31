@@ -1,5 +1,15 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey
 from database import Base
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    email = Column(String, unique=True)
+    hashed_password = Column(String)
+    fullname = Column(String)
+
 
 class Product(Base):
     __tablename__ = "products"
@@ -22,3 +32,13 @@ class Product(Base):
                 return self.image_url
             return f"/media/profile_pics/{self.image_url}"
         return "media\profile_pics\premium_toor_dal.png"
+
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    items_json = Column(String)  # JSON formatted list of products
+    total_price = Column(Float)
+    created_at = Column(String)  # Timestamp

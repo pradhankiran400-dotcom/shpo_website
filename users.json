@@ -1,0 +1,26 @@
+[
+    {
+        "id": 1,
+        "username": "kiran_5106",
+        "email": "kiran_5106@example.com",
+        "fullname": "Kiran Pradhan"
+    },
+    {
+        "id": 2,
+        "username": "kiran_4216",
+        "email": "kiran_4216@example.com",
+        "fullname": "Kiran Pradhan"
+    },
+    {
+        "id": 3,
+        "username": "kiran_2017",
+        "email": "kiran_2017@example.com",
+        "fullname": "Kiran Pradhan"
+    },
+    {
+        "id": 4,
+        "username": "Kiran123",
+        "email": "pradhan13@gmail.com",
+        "fullname": "Kiran Kumar Pradhan"
+    }
+]

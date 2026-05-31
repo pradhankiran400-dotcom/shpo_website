@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,13 +8,16 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+        rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Custom Style -->
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="icon" type="image/png" href="/static/favicon.png">
 </head>
+
 <body>
     <!-- Top Decorative Bar -->
     <div class="top-bar">
@@ -38,7 +42,16 @@
             </div>
 
             <!-- Header Actions -->
-            <div class="header-actions">
+            <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
+                <!-- User Profile Trigger -->
+                <div id="user-profile-section">
+                    <button class="auth-toggle-btn" id="auth-modal-toggle"
+                        style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 0.9rem; border-radius: var(--radius-xl); border: 1.5px solid var(--primary); background: transparent; color: var(--primary); font-family: var(--font-body); font-weight: 600; cursor: pointer; transition: var(--transition-fast);">
+                        <i data-lucide="user" style="width: 16px; height: 16px;"></i>
+                        <span id="auth-btn-text">Sign In</span>
+                    </button>
+                </div>
+
                 <button class="cart-toggle-btn" id="cart-toggle">
                     <div class="cart-icon-wrapper">
                         <i data-lucide="shopping-basket"></i>
@@ -59,7 +72,8 @@
                 <span class="hero-subtitle">Est. 2012 — Purest Grade Grains</span>
                 <h2 class="hero-title">Bringing Nourishment & Tradition To Your Home</h2>
                 <p class="hero-description">
-                    At <strong>Maa Bankeswari Rice Store</strong>, we handpick the finest varieties of aromatic basmati, daily-grade rice, and unpolished, protein-rich dals. Experience culinary perfection.
+                    At <strong>Maa Bankeswari Rice Store</strong>, we handpick the finest varieties of aromatic basmati,
+                    daily-grade rice, and unpolished, protein-rich dals. Experience culinary perfection.
                 </p>
                 <div class="hero-features">
                     <div class="feature-tag">
@@ -113,7 +127,8 @@
                         {% if product.badge %}
                         <span class="product-badge">{{ product.badge }}</span>
                         {% endif %}
-                        <img src="{{ product.image_path }}" alt="{{ product.name }}" class="product-image" loading="lazy">
+                        <img src="{{ product.image_path }}" alt="{{ product.name }}" class="product-image"
+                            loading="lazy">
                         <div class="product-image-overlay"></div>
                     </div>
                     <div class="product-info">
@@ -128,13 +143,10 @@
                                 <span class="price-val">{{ product.price }}</span>
                                 <span class="unit">/ {{ product.unit }}</span>
                             </div>
-                            <div class="product-action-container" 
-                                 id="action-{{ product.id }}"
-                                 data-id="{{ product.id }}"
-                                 data-name="{{ product.name }}"
-                                 data-price="{{ product.price }}"
-                                 data-image="{{ product.image_path }}"
-                                 data-unit="{{ product.unit }}">
+                            <div class="product-action-container" id="action-{{ product.id }}"
+                                data-id="{{ product.id }}" data-name="{{ product.name }}"
+                                data-price="{{ product.price }}" data-image="{{ product.image_path }}"
+                                data-unit="{{ product.unit }}">
                                 <button class="add-to-cart-btn">
                                     <i data-lucide="plus"></i>
                                     <span>Add</span>
@@ -233,14 +245,169 @@
                 <i data-lucide="badge-check"></i>
             </div>
             <h3>Order Placed Successfully!</h3>
-            <p>Thank you for shopping with <strong>Maa Bankeswari Rice Store</strong>. We are preparing your order of premium grains. Our team will contact you shortly for delivery confirmation.</p>
+            <p>Thank you for shopping with <strong>Maa Bankeswari Rice Store</strong>. We are preparing your order of
+                premium grains. Our team will contact you shortly for delivery confirmation.</p>
             <div class="order-summary-box">
                 <div class="summary-header">Order Summary</div>
                 <div id="modal-order-items"></div>
                 <hr>
                 <div class="summary-total">Total Bill: <strong>₹<span id="modal-total-price">0.00</span></strong></div>
             </div>
-            <button class="btn btn-primary" id="close-modal-btn">Continue Shopping</button>
+            <div class="modal-actions"
+                style="display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap;">
+                <button class="btn btn-primary" id="close-modal-btn">Continue Shopping</button>
+                <button class="btn btn-outline" id="copy-invoice-btn">
+                    <i data-lucide="copy"></i> Copy Receipt
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Registration/Login Modal -->
+    <div class="modal-overlay" id="auth-modal">
+        <div class="modal-content auth-modal-content" style="max-width: 420px; padding: 32px; position: relative;">
+            <div class="auth-tabs"
+                style="display: flex; border-bottom: 2px solid rgba(27,67,50,0.08); margin-bottom: 24px;">
+                <button class="auth-tab-btn active" id="tab-login"
+                    style="flex: 1; padding: 10px; background: transparent; border: none; font-family: var(--font-body); font-weight: 700; font-size: 1rem; color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: -2px; cursor: pointer;">Sign
+                    In</button>
+                <button class="auth-tab-btn" id="tab-register"
+                    style="flex: 1; padding: 10px; background: transparent; border: none; font-family: var(--font-body); font-weight: 600; font-size: 1rem; color: var(--text-light); border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer;">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form">
+                <div class="form-group" style="text-align: left; margin-bottom: 16px;">
+                    <label
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 6px;">Username</label>
+                    <input type="text" id="login-username" placeholder="Enter your username" required
+                        style="width: 100%; padding: 10px 14px; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-sm); outline: none; font-family: var(--font-body); font-size: 0.9rem;">
+                </div>
+                <div class="form-group" style="text-align: left; margin-bottom: 20px;">
+                    <label
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 6px;">Password</label>
+                    <input type="password" id="login-password" placeholder="Enter your password" required
+                        style="width: 100%; padding: 10px 14px; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-sm); outline: none; font-family: var(--font-body); font-size: 0.9rem;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: var(--radius-sm);">Sign
+                    In</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" style="display: none;">
+                <div class="form-group" style="text-align: left; margin-bottom: 12px;">
+                    <label
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 6px;">Full
+                        Name</label>
+                    <input type="text" id="reg-fullname" placeholder="Enter your full name" required
+                        style="width: 100%; padding: 10px 14px; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-sm); outline: none; font-family: var(--font-body); font-size: 0.9rem;">
+                </div>
+                <div class="form-group" style="text-align: left; margin-bottom: 12px;">
+                    <label
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 6px;">Username</label>
+                    <input type="text" id="reg-username" placeholder="Create a unique username" required
+                        style="width: 100%; padding: 10px 14px; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-sm); outline: none; font-family: var(--font-body); font-size: 0.9rem;">
+                </div>
+                <div class="form-group" style="text-align: left; margin-bottom: 12px;">
+                    <label
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 6px;">Email
+                        Address</label>
+                    <input type="email" id="reg-email" placeholder="Enter your email" required
+                        style="width: 100%; padding: 10px 14px; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-sm); outline: none; font-family: var(--font-body); font-size: 0.9rem;">
+                </div>
+                <div class="form-group" style="text-align: left; margin-bottom: 20px;">
+                    <label
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 6px;">Password</label>
+                    <input type="password" id="reg-password" placeholder="Create a secure password" required
+                        style="width: 100%; padding: 10px 14px; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-sm); outline: none; font-family: var(--font-body); font-size: 0.9rem;">
+                </div>
+                <button type="submit" class="btn btn-primary"
+                    style="width: 100%; border-radius: var(--radius-sm);">Create Account</button>
+            </form>
+            <button class="close-auth-btn" id="close-auth"
+                style="position: absolute; top: 12px; right: 12px; background: transparent; border: none; color: var(--text-light); cursor: pointer; padding: 6px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: var(--transition-fast);"><i
+                    data-lucide="x" style="width: 18px; height: 18px;"></i></button>
+        </div>
+    </div>
+
+    <!-- Profile & Order History Drawer (Slides in from right) -->
+    <div class="cart-drawer-overlay" id="profile-overlay"></div>
+    <div class="cart-drawer" id="profile-drawer">
+        <div class="cart-header">
+            <div class="cart-header-title">
+                <i data-lucide="user-check" style="color: var(--primary);"></i>
+                <h3 id="profile-drawer-title">My Profile</h3>
+            </div>
+            <button class="close-cart-btn" id="close-profile">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="cart-body">
+            <!-- User Info Summary Card -->
+            <div class="user-summary-card"
+                style="background: linear-gradient(135deg, var(--primary-ultra-light) 0%, #ffffff 100%); border: 1px solid rgba(27,67,50,0.08); padding: 20px; border-radius: var(--radius-md); text-align: center; margin-bottom: 24px;">
+                <div class="user-avatar"
+                    style="width: 60px; height: 60px; background-color: var(--primary); color: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; margin: 0 auto 12px auto; box-shadow: 0 4px 8px rgba(27,67,50,0.15);"
+                    id="profile-avatar-circle">U</div>
+                <h4 id="profile-fullname"
+                    style="font-size: 1.15rem; color: var(--primary-dark); font-weight: 700; margin-bottom: 4px;">User
+                    Full Name</h4>
+                <p id="profile-email" style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 16px;">
+                    user@example.com</p>
+                <button class="btn btn-outline" id="signout-btn"
+                    style="padding: 6px 16px; font-size: 0.85rem; height: 36px; border-radius: var(--radius-xl); font-weight: 700; width: 100%; border: 1.5px solid var(--danger); color: var(--danger); background: transparent; cursor: pointer; transition: var(--transition-fast);">
+                    <i data-lucide="log-out"
+                        style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i> Sign Out
+                </button>
+            </div>
+
+            <!-- Visualization Stats -->
+            <div class="visual-stats-section" style="margin-bottom: 28px;">
+                <h4
+                    style="font-family: var(--font-heading); color: var(--primary-dark); font-size: 1.1rem; margin-bottom: 12px; font-weight: 700;">
+                    My Staple Summary</h4>
+                <div class="stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="stat-box"
+                        style="background-color: var(--bg-base); padding: 12px; border-radius: var(--radius-sm); border: 1px solid rgba(27,67,50,0.04); text-align: center;">
+                        <span
+                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); font-weight: 600; display: block; margin-bottom: 4px;">Orders
+                            Placed</span>
+                        <strong id="stat-order-count"
+                            style="font-size: 1.4rem; color: var(--primary); font-weight: 800;">0</strong>
+                    </div>
+                    <div class="stat-box"
+                        style="background-color: var(--bg-base); padding: 12px; border-radius: var(--radius-sm); border: 1px solid rgba(27,67,50,0.04); text-align: center;">
+                        <span
+                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); font-weight: 600; display: block; margin-bottom: 4px;">Total
+                            Spent</span>
+                        <strong style="font-size: 1.4rem; color: var(--primary); font-weight: 800;">₹<span
+                                id="stat-total-spent">0.00</span></strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order History List -->
+            <div class="order-history-section">
+                <h4
+                    style="font-family: var(--font-heading); color: var(--primary-dark); font-size: 1.1rem; margin-bottom: 16px; font-weight: 700;">
+                    Purchase History</h4>
+
+                <!-- History Empty State -->
+                <div class="history-empty-state" id="history-empty" style="text-align: center; padding: 32px 16px;">
+                    <div style="font-size: 2.5rem; margin-bottom: 12px;">🌾</div>
+                    <h5 style="font-size: 0.95rem; color: var(--primary-dark); margin-bottom: 6px; font-weight: 700;">No
+                        purchases yet</h5>
+                    <p style="font-size: 0.8rem; color: var(--text-light); max-width: 240px; margin: 0 auto;">Your
+                        premium grain order history will be beautifully visualized here once you checkout!</p>
+                </div>
+
+                <!-- History Items List -->
+                <div class="history-items-list" id="history-items-container"
+                    style="display: none; flex-direction: column; gap: 16px;">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -249,7 +416,8 @@
         <div class="footer-container">
             <div class="footer-brand">
                 <div class="footer-logo">🌾 Maa Bankeswari Rice Store</div>
-                <p>Purest traditional grains, dals, and kitchen staples curated for health-conscious families. Taste the authenticity of farm-fresh harvests.</p>
+                <p>Purest traditional grains, dals, and kitchen staples curated for health-conscious families. Taste the
+                    authenticity of farm-fresh harvests.</p>
             </div>
             <div class="footer-links">
                 <h6>Quick Links</h6>
@@ -263,12 +431,14 @@
             <div class="footer-contact">
                 <h6>Contact Store</h6>
                 <!-- 7RV7+FW6, Indradhanu Market, IRC Village, Nayapalli, Bhubaneswar, Odisha 751015 -->
-                <p><i data-lucide="map-pin"></i> Indradhanu Market, IRC Village, Nayapalli, Bhubaneswar, Odisha 751015</p>
+                <p><i data-lucide="map-pin"></i> Indradhanu Market, IRC Village, Nayapalli, Bhubaneswar, Odisha 751015
+                </p>
                 <p><i data-lucide="phone"></i> +91 9776400523 / +91 674 234567</p>
                 <p><i data-lucide="mail"></i> info@maabankeswariricestore.com</p>
                 <p>
-                    <a href="https://maps.app.goo.gl/j1gMcbk35XPBAseZA" target="_blank" style="color: #3550ea; font-weight: 500; text-decoration: none;">
-                            📍Open in Google Maps
+                    <a href="https://maps.app.goo.gl/j1gMcbk35XPBAseZA" target="_blank"
+                        style="color: #3550ea; font-weight: 500; text-decoration: none;">
+                        📍Open in Google Maps
                     </a>
                 </p>
             </div>
@@ -285,4 +455,5 @@
         lucide.createIcons();
     </script>
 </body>
+
 </html>

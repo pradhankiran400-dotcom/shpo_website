@@ -24,3 +24,35 @@ class ProductResponse(ProductBase):
     class Config:
         from_attributes = True
 
+
+class UserCreate(BaseModel):
+    username: str
+    email: str
+    password: str
+    fullname: str
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    fullname: str
+
+    class Config:
+        from_attributes = True
+
+
+class OrderCreate(BaseModel):
+    user_id: Optional[int] = None
+    items_json: str
+    total_price: float
+
+class OrderResponse(OrderCreate):
+    id: int
+    created_at: str
+
+    class Config:
+        from_attributes = True
