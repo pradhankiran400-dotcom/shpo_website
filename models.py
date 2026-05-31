@@ -42,3 +42,8 @@ class Order(Base):
     items_json = Column(String)  # JSON formatted list of products
     total_price = Column(Float)
     created_at = Column(String)  # Timestamp
+    delivery_address = Column(String, nullable=True)
+    distance_km = Column(Float, nullable=True)
+    delivery_charge = Column(Float, nullable=True)
+    payment_method = Column(String, default="COD")
+    order_status = Column(String, default="Pending Approval")

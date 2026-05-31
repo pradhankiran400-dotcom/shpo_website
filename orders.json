@@ -13,7 +13,12 @@
             }
         ],
         "total_price": 190.0,
-        "created_at": "2026-05-31 16:09:17"
+        "created_at": "2026-05-31 16:09:17",
+        "delivery_address": null,
+        "distance_km": null,
+        "delivery_charge": null,
+        "payment_method": "COD",
+        "order_status": "Pending Approval"
     },
     {
         "id": 2,
@@ -29,7 +34,12 @@
             }
         ],
         "total_price": 320.0,
-        "created_at": "2026-05-31 16:32:15"
+        "created_at": "2026-05-31 16:32:15",
+        "delivery_address": null,
+        "distance_km": null,
+        "delivery_charge": null,
+        "payment_method": "COD",
+        "order_status": "Pending Approval"
     },
     {
         "id": 3,
@@ -51,7 +61,12 @@
             }
         ],
         "total_price": 400.0,
-        "created_at": "2026-05-31 16:47:29"
+        "created_at": "2026-05-31 16:47:29",
+        "delivery_address": null,
+        "distance_km": null,
+        "delivery_charge": null,
+        "payment_method": "COD",
+        "order_status": "Pending Approval"
     },
     {
         "id": 4,
@@ -73,7 +88,12 @@
             }
         ],
         "total_price": 400.0,
-        "created_at": "2026-05-31 16:47:57"
+        "created_at": "2026-05-31 16:47:57",
+        "delivery_address": null,
+        "distance_km": null,
+        "delivery_charge": null,
+        "payment_method": "COD",
+        "order_status": "Pending Approval"
     },
     {
         "id": 5,
@@ -95,6 +115,203 @@
             }
         ],
         "total_price": 400.0,
-        "created_at": "2026-05-31 16:48:06"
+        "created_at": "2026-05-31 16:48:06",
+        "delivery_address": null,
+        "distance_km": null,
+        "delivery_charge": null,
+        "payment_method": "COD",
+        "order_status": "Pending Approval"
+    },
+    {
+        "id": 6,
+        "user_id": 5,
+        "items": [
+            {
+                "id": 1,
+                "name": "Govindabhog Rice",
+                "price": 120.0,
+                "unit": "kg",
+                "quantity": 2
+            },
+            {
+                "id": 2,
+                "name": "Premium Toor Dal",
+                "price": 160.0,
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 412.4,
+        "created_at": "2026-05-31 16:55:12",
+        "delivery_address": "Plot No. 124, Sahid Nagar, Bhubaneswar, Odisha",
+        "distance_km": 6.2,
+        "delivery_charge": 12.4,
+        "payment_method": "COD",
+        "order_status": "Pending Approval"
+    },
+    {
+        "id": 7,
+        "user_id": 6,
+        "items": [
+            {
+                "id": 3,
+                "name": "Premium Toor Dal",
+                "price": 160,
+                "image": "/media/profile_pics/premium_toor_dal.png",
+                "unit": "kg",
+                "quantity": 2
+            }
+        ],
+        "total_price": 625.5799999999999,
+        "created_at": "2026-05-31 16:57:38",
+        "delivery_address": "GPS Coordinate Location (19.32353, 84.78299)",
+        "distance_km": 152.79,
+        "delivery_charge": 305.58,
+        "payment_method": "COD",
+        "order_status": "Pending Approval"
+    },
+    {
+        "id": 8,
+        "user_id": 7,
+        "items": [
+            {
+                "id": 1,
+                "name": "Govindabhog Rice",
+                "price": 120.0,
+                "unit": "kg",
+                "quantity": 2
+            },
+            {
+                "id": 2,
+                "name": "Premium Toor Dal",
+                "price": 160.0,
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 412.4,
+        "created_at": "2026-05-31 17:00:30",
+        "delivery_address": "Plot No. 124, Sahid Nagar, Bhubaneswar, Odisha",
+        "distance_km": 6.2,
+        "delivery_charge": 12.4,
+        "payment_method": "COD",
+        "order_status": "Pending Approval"
+    },
+    {
+        "id": 9,
+        "user_id": 6,
+        "items": [
+            {
+                "id": 2,
+                "name": "Organic Moog Dal",
+                "price": 100,
+                "image": "/media/profile_pics/organic_moong_dal.png",
+                "unit": "kg",
+                "quantity": 2
+            }
+        ],
+        "total_price": 505.58,
+        "created_at": "2026-05-31 17:01:20",
+        "delivery_address": "GPS Coordinate Location (19.32353, 84.78299)",
+        "distance_km": 152.79,
+        "delivery_charge": 305.58,
+        "payment_method": "COD",
+        "order_status": "Pending Approval"
+    },
+    {
+        "id": 10,
+        "user_id": 8,
+        "items": [
+            {
+                "id": 1,
+                "name": "Govindabhog Rice",
+                "price": 120.0,
+                "unit": "kg",
+                "quantity": 2
+            },
+            {
+                "id": 2,
+                "name": "Premium Toor Dal",
+                "price": 160.0,
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 412.4,
+        "created_at": "2026-05-31 17:08:41",
+        "delivery_address": "Plot No. 124, Sahid Nagar, Bhubaneswar, Odisha",
+        "distance_km": 6.2,
+        "delivery_charge": 12.4,
+        "payment_method": "COD",
+        "order_status": "Pending Approval"
+    },
+    {
+        "id": 11,
+        "user_id": 9,
+        "items": [
+            {
+                "id": 3,
+                "name": "Premium Toor Dal",
+                "price": 160,
+                "image": "/media/profile_pics/premium_toor_dal.png",
+                "unit": "kg",
+                "quantity": 2
+            }
+        ],
+        "total_price": 625.64,
+        "created_at": "2026-05-31 17:10:34",
+        "delivery_address": "GPS Coordinate Location (19.32337, 84.78268)",
+        "distance_km": 152.82,
+        "delivery_charge": 305.64,
+        "payment_method": "COD",
+        "order_status": "Pending Approval"
+    },
+    {
+        "id": 12,
+        "user_id": 10,
+        "items": [
+            {
+                "id": 1,
+                "name": "Govindabhog Rice",
+                "price": 120.0,
+                "unit": "kg",
+                "quantity": 2
+            },
+            {
+                "id": 2,
+                "name": "Premium Toor Dal",
+                "price": 160.0,
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 412.4,
+        "created_at": "2026-05-31 17:18:43",
+        "delivery_address": "Plot No. 124, Sahid Nagar, Bhubaneswar, Odisha",
+        "distance_km": 6.2,
+        "delivery_charge": 12.4,
+        "payment_method": "UPI",
+        "order_status": "Approved"
+    },
+    {
+        "id": 13,
+        "user_id": 9,
+        "items": [
+            {
+                "id": 3,
+                "name": "Premium Toor Dal",
+                "price": 160,
+                "image": "/media/profile_pics/premium_toor_dal.png",
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 183.0,
+        "created_at": "2026-05-31 17:25:29",
+        "delivery_address": "IRC Village, Nayapalli, Bhubaneswar, Odisha 751015",
+        "distance_km": 11.5,
+        "delivery_charge": 23.0,
+        "payment_method": "COD",
+        "order_status": "Approved"
     }
 ]

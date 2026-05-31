@@ -49,6 +49,11 @@ class OrderCreate(BaseModel):
     user_id: Optional[int] = None
     items_json: str
     total_price: float
+    delivery_address: Optional[str] = None
+    distance_km: Optional[float] = None
+    delivery_charge: Optional[float] = None
+    payment_method: Optional[str] = "COD"
+    order_status: Optional[str] = "Pending Approval"
 
 class OrderResponse(OrderCreate):
     id: int

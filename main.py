@@ -57,7 +57,12 @@ def sync_orders_to_file(db: Session):
                 "user_id": order.user_id,
                 "items": json.loads(order.items_json) if order.items_json else [],
                 "total_price": order.total_price,
-                "created_at": order.created_at
+                "created_at": order.created_at,
+                "delivery_address": order.delivery_address,
+                "distance_km": order.distance_km,
+                "delivery_charge": order.delivery_charge,
+                "payment_method": order.payment_method,
+                "order_status": order.order_status
             })
         with open("orders.json", "w", encoding="utf-8") as f:
             json.dump(orders_list, f, indent=4, ensure_ascii=False)
@@ -159,7 +164,12 @@ def create_new_order(order_data: OrderCreate, db: Session = Depends(get_db)):
         user_id=order_data.user_id,
         items_json=order_data.items_json,
         total_price=order_data.total_price,
-        created_at=timestamp
+        created_at=timestamp,
+        delivery_address=order_data.delivery_address,
+        distance_km=order_data.distance_km,
+        delivery_charge=order_data.delivery_charge,
+        payment_method=order_data.payment_method,
+        order_status=order_data.order_status
     )
     db.add(new_order)
     db.commit()
@@ -170,7 +180,12 @@ def create_new_order(order_data: OrderCreate, db: Session = Depends(get_db)):
     
     # Print neat logs to local terminal for the shop administrator
     print(f"\n[NEW ORDER RECEIVED] (ID: {new_order.id}) at {timestamp}")
+    print(f"Payment Method: {new_order.payment_method}")
+    print(f"Order Status: {new_order.order_status}")
     print(f"Total Amount: Rs. {new_order.total_price:.2f}")
+    if new_order.delivery_address:
+        print(f"Delivery Address: {new_order.delivery_address}")
+        print(f"Distance: {new_order.distance_km:.2f} km (Charge: Rs. {new_order.delivery_charge:.2f})")
     print(f"Items Details: {new_order.items_json}\n")
     
     return new_order
