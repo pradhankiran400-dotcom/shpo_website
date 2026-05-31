@@ -54,6 +54,18 @@ MIGRATIONS = [
         "sql":   "ALTER TABLE orders ADD COLUMN receipt_image_url TEXT",
         "label": "orders.receipt_image_url"
     },
+    # Add phone_number to users
+    {
+        "check": "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='phone_number'",
+        "sql":   "ALTER TABLE users ADD COLUMN phone_number TEXT DEFAULT ''",
+        "label": "users.phone_number"
+    },
+    # Add phone_number to orders
+    {
+        "check": "SELECT COUNT(*) FROM pragma_table_info('orders') WHERE name='phone_number'",
+        "sql":   "ALTER TABLE orders ADD COLUMN phone_number TEXT DEFAULT ''",
+        "label": "orders.phone_number"
+    },
 ]
 
 def run_migrations():

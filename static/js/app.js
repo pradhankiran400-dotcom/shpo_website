@@ -1185,6 +1185,10 @@ document.addEventListener("DOMContentLoaded", () => {
             if (e.target.files && e.target.files.length > 0) {
                 const file = e.target.files[0];
                 
+                // Hide any previous mismatch error banner
+                const mismatchBanner = document.getElementById("receipt-mismatch-error-banner");
+                if (mismatchBanner) mismatchBanner.style.display = "none";
+                
                 // Pack file in FormData
                 const formData = new FormData();
                 formData.append("file", file);
@@ -1310,7 +1314,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 delivery_charge: calculatedDeliveryCharge,
                 payment_method: selectedPaymentMethod,
                 order_status: "Pending Approval",
-                receipt_image_url: uploadedReceiptUrl
+                receipt_image_url: uploadedReceiptUrl,
+                phone_number: currentUser ? currentUser.phone_number : ""
             };
 
             // Disable button during network round-trip
@@ -1326,9 +1331,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 },
                 body: JSON.stringify(orderPayload)
             })
-            .then(response => {
+            .then(async response => {
                 if (!response.ok) {
-                    throw new Error("Checkout request failed.");
+                    const errData = await response.json().catch(() => ({}));
+                    const detail = errData.detail || "Checkout request failed.";
+                    throw new Error(detail);
                 }
                 return response.json();
             })
@@ -1399,7 +1406,39 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .catch(error => {
                 console.error("Maa Bankeswari Rice Store: Checkout error:", error);
-                showToast("Could not process order. Please try again!");
+                
+                if (selectedPaymentMethod === "UPI") {
+                    const mismatchBanner = document.getElementById("receipt-mismatch-error-banner");
+                    const mismatchText = document.getElementById("receipt-mismatch-error-text");
+                    
+                    if (mismatchBanner && mismatchText) {
+                        mismatchText.innerText = error.message || "The uploaded image failed receipt amount verification or security checks.";
+                        mismatchBanner.style.display = "block";
+                        
+                        // Smoothly scroll the error banner into view inside modal
+                        mismatchBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                    
+                    // Reset the uploaded receipt states so they are forced to reupload a new one
+                    uploadedReceiptUrl = null;
+                    const receiptFilenameDisplay = document.getElementById("receipt-filename-display");
+                    if (receiptFilenameDisplay) {
+                        receiptFilenameDisplay.style.display = "none";
+                        receiptFilenameDisplay.innerText = "";
+                    }
+                    const receiptUploadTrigger = document.getElementById("receipt-upload-trigger");
+                    if (receiptUploadTrigger) {
+                        receiptUploadTrigger.innerHTML = `<i data-lucide="upload" style="width: 15px; height: 15px;"></i> Choose Receipt Image`;
+                        if (window.lucide) window.lucide.createIcons();
+                    }
+                    const paymentReceiptInput = document.getElementById("payment-receipt-input");
+                    if (paymentReceiptInput) {
+                        paymentReceiptInput.value = "";
+                    }
+                    updatePaymentMethodUI();
+                }
+                
+                showToast(error.message || "Could not process order. Please try again!");
             })
             .finally(() => {
                 // Restore button states
@@ -1648,37 +1687,124 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Registration Submission Handler
+    // OTP State Variables
+    let activeOTP = "";
+    let pendingUserPayload = null;
+
+    const otpModal = document.getElementById("otp-modal");
+    const closeOtpBtn = document.getElementById("close-otp");
+    const otpVerifyBtn = document.getElementById("otp-verify-btn");
+    const otpResendBtn = document.getElementById("otp-resend-btn");
+    const otpCodeInput = document.getElementById("otp-code-input");
+    const otpPhoneDisplay = document.getElementById("otp-phone-display");
+    const mockSmsToast = document.getElementById("mock-sms-toast");
+    const mockOtpVal = document.getElementById("mock-otp-val");
+
+    function closeOtpModal() {
+        if (otpModal) {
+            otpModal.classList.remove("active");
+        }
+        document.body.style.overflow = "";
+    }
+
+    if (closeOtpBtn) {
+        closeOtpBtn.addEventListener("click", closeOtpModal);
+    }
+
+    // Function to trigger mock SMS simulation alert
+    function triggerMockSMS(phone, code) {
+        if (otpPhoneDisplay) otpPhoneDisplay.innerText = phone;
+        if (mockOtpVal) mockOtpVal.innerText = code;
+        if (mockSmsToast) {
+            mockSmsToast.style.display = "block";
+            // Pulse chime for SMS arrival sound!
+            setTimeout(() => {
+                playChime("add"); 
+                showToast(`💬 SMS received on ${phone}!`);
+            }, 500);
+        }
+    }
+
+    // Registration Form Submission -> Intercept and trigger OTP
     if (registerForm) {
         registerForm.addEventListener("submit", (e) => {
             e.preventDefault();
             const fullnameInput = document.getElementById("reg-fullname");
             const usernameInput = document.getElementById("reg-username");
             const emailInput = document.getElementById("reg-email");
+            const phoneInput = document.getElementById("reg-phone");
             const passwordInput = document.getElementById("reg-password");
 
-            if (!fullnameInput || !usernameInput || !emailInput || !passwordInput) return;
+            if (!fullnameInput || !usernameInput || !emailInput || !phoneInput || !passwordInput) return;
 
-            const payload = {
+            const phone = phoneInput.value.trim();
+            if (phone.length < 10) {
+                showToast("Please enter a valid 10-digit phone number!", false);
+                return;
+            }
+
+            // Save payload for subsequent database registration upon verification
+            pendingUserPayload = {
                 fullname: fullnameInput.value.trim(),
                 username: usernameInput.value.trim(),
                 email: emailInput.value.trim(),
+                phone_number: phone,
                 password: passwordInput.value
             };
 
-            const submitBtn = registerForm.querySelector("button[type='submit']");
-            const originalText = submitBtn ? submitBtn.innerText : "Create Account";
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerText = "Creating Account...";
+            // Generate a secure 6-digit OTP code on the fly
+            activeOTP = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            // Close register modal & open OTP modal
+            closeAuthModal();
+            if (otpModal) {
+                otpModal.classList.add("active");
+                document.body.style.overflow = "hidden";
             }
+            if (otpCodeInput) otpCodeInput.value = "";
+
+            // Simulate SMS routing
+            triggerMockSMS(phone, activeOTP);
+        });
+    }
+
+    // Resend OTP Simulator Click Handler
+    if (otpResendBtn) {
+        otpResendBtn.addEventListener("click", () => {
+            if (!pendingUserPayload) return;
+            activeOTP = Math.floor(100000 + Math.random() * 900000).toString();
+            if (otpCodeInput) otpCodeInput.value = "";
+            triggerMockSMS(pendingUserPayload.phone_number, activeOTP);
+            showToast("Simulated SMS OTP resent successfully! 🌾");
+        });
+    }
+
+    // Verify OTP & Complete Backend Registration
+    if (otpVerifyBtn) {
+        otpVerifyBtn.addEventListener("click", () => {
+            const enteredOTP = otpCodeInput ? otpCodeInput.value.trim() : "";
+            if (enteredOTP.length !== 6) {
+                showToast("Please enter the complete 6-digit OTP code!", false);
+                return;
+            }
+
+            if (enteredOTP !== activeOTP) {
+                playChime("reject");
+                showToast("Verification Failed: Invalid OTP code! ❌", false);
+                return;
+            }
+
+            // OTP verified! Submit payload to database
+            otpVerifyBtn.disabled = true;
+            const originalText = otpVerifyBtn.innerText;
+            otpVerifyBtn.innerText = "Registering...";
 
             fetch("/api/register", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(pendingUserPayload)
             })
             .then(async (response) => {
                 if (!response.ok) {
@@ -1689,22 +1815,33 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .then((user) => {
                 saveUser(user);
-                closeAuthModal();
-                showToast(`Account created! Welcome, ${user.fullname}! 🌾`);
+                closeOtpModal();
+                playChime("order"); // Upward chord success sound
+                showToast(`Welcome to Maa Bankeswari Store, ${user.fullname}! 🎉`);
 
-                fullnameInput.value = "";
-                usernameInput.value = "";
-                emailInput.value = "";
-                passwordInput.value = "";
+                // Reset forms
+                const fullnameInput = document.getElementById("reg-fullname");
+                const usernameInput = document.getElementById("reg-username");
+                const emailInput = document.getElementById("reg-email");
+                const phoneInput = document.getElementById("reg-phone");
+                const passwordInput = document.getElementById("reg-password");
+                if (fullnameInput) fullnameInput.value = "";
+                if (usernameInput) usernameInput.value = "";
+                if (emailInput) emailInput.value = "";
+                if (phoneInput) phoneInput.value = "";
+                if (passwordInput) passwordInput.value = "";
+                
+                pendingUserPayload = null;
+                activeOTP = "";
             })
             .catch((err) => {
-                console.error("Registration failed:", err);
-                showToast(err.message || "Could not register account.");
+                console.error("OTP Registration submit failed:", err);
+                showToast(err.message || "Could not register account.", false);
             })
             .finally(() => {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = originalText;
+                if (otpVerifyBtn) {
+                    otpVerifyBtn.disabled = false;
+                    otpVerifyBtn.innerText = originalText;
                 }
             });
         });
@@ -1847,6 +1984,189 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
+    // ----------------------------------------------------
+    // CHATBOT WIDGET CONTROLLER ("LAXMI")
+    // ----------------------------------------------------
+    const chatbotLauncher = document.getElementById("chatbot-launcher");
+    const chatbotWindow = document.getElementById("chatbot-window");
+    const chatbotCloseBtn = document.getElementById("chatbot-close-btn");
+    const chatbotInputForm = document.getElementById("chatbot-input-form");
+    const chatbotUserInput = document.getElementById("chatbot-user-input");
+    const chatbotMessagesLog = document.getElementById("chatbot-messages-log");
+    const chatbotPromptContainer = document.getElementById("chatbot-prompt-container");
+
+    // Chatbot Welcome Greeting Dialog
+    function initializeChatbot() {
+        if (!chatbotMessagesLog) return;
+        chatbotMessagesLog.innerHTML = "";
+        
+        appendBotMessage("Namaste! 🙏 Welcome to **Maa Bankeswari Rice Store**! I am **Laxmi**, your virtual grain assistant. How can I help you choose the perfect premium grains or check details today? 🌾");
+    }
+
+    // Toggle chatbot window drawer
+    function toggleChatbot() {
+        if (chatbotWindow) {
+            chatbotWindow.classList.toggle("active");
+            if (chatbotWindow.classList.contains("active")) {
+                if (chatbotUserInput) chatbotUserInput.focus();
+                // Play a pleasant add sound chime!
+                playChime("add");
+            }
+        }
+    }
+
+    if (chatbotLauncher) chatbotLauncher.addEventListener("click", toggleChatbot);
+    if (chatbotCloseBtn) chatbotCloseBtn.addEventListener("click", () => {
+        if (chatbotWindow) chatbotWindow.classList.remove("active");
+    });
+
+    // Append standard user chat bubble
+    function appendUserMessage(text) {
+        if (!chatbotMessagesLog) return;
+        const formatted = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const row = `
+            <div class="chat-msg-row user-row">
+                <div class="chat-bubble">${formatted}</div>
+            </div>
+        `;
+        chatbotMessagesLog.insertAdjacentHTML("beforeend", row);
+        chatbotMessagesLog.scrollTop = chatbotMessagesLog.scrollHeight;
+    }
+
+    // Append dynamic bot message bubble with markdown bold helpers
+    function appendBotMessage(htmlContent) {
+        if (!chatbotMessagesLog) return;
+        
+        // Custom simple bold parser to allow neat markdown layout (**bold**)
+        const parsed = htmlContent
+            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+            .replace(/\*(.*?)\*/g, "<em>$1</em>");
+            
+        const row = `
+            <div class="chat-msg-row bot-row">
+                <div class="chat-bubble">${parsed}</div>
+            </div>
+        `;
+        chatbotMessagesLog.insertAdjacentHTML("beforeend", row);
+        chatbotMessagesLog.scrollTop = chatbotMessagesLog.scrollHeight;
+        
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    // Show three bouncing typing indicator dots
+    let typingIndicatorElement = null;
+    function showTypingIndicator() {
+        if (!chatbotMessagesLog || typingIndicatorElement) return;
+        
+        const html = `
+            <div class="chat-msg-row bot-row" id="chatbot-typing-row">
+                <div class="typing-indicator-bubble">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+        `;
+        chatbotMessagesLog.insertAdjacentHTML("beforeend", html);
+        typingIndicatorElement = document.getElementById("chatbot-typing-row");
+        chatbotMessagesLog.scrollTop = chatbotMessagesLog.scrollHeight;
+    }
+
+    // Hide typing indicator
+    function removeTypingIndicator() {
+        if (typingIndicatorElement) {
+            typingIndicatorElement.remove();
+            typingIndicatorElement = null;
+        }
+    }
+
+    // Chatbot Smart Response Generator Router
+    function processUserMessage(query) {
+        showTypingIndicator();
+        
+        setTimeout(() => {
+            removeTypingIndicator();
+            const lower = query.toLowerCase();
+            let response = "";
+
+            // Keyword match ruleset
+            if (lower.includes("hello") || lower.includes("hi ") || lower.includes("namaste") || lower.includes("hey")) {
+                response = "Hello there! 🙏 Hope you are having an amazing day. I am here to help you find premium aromatic rice, nutritious unpolished dals, or estimate delivery charges. How can I assist you? 🌾";
+            } else if (lower.includes("price") || lower.includes("cost") || lower.includes("how much")) {
+                response = "We pride ourselves on offering **wholesale milling rates**! You can browse the storefront catalog to view live rates. For instance:\n" +
+                           "- **Laxmi Premium Grains**: ₹65 / kg\n" +
+                           "- **Special Basmati Rice**: ₹120 / kg\n" +
+                           "- **Premium Biryani Rice**: ₹135 / kg\n" +
+                           "- **Nutritious Moog Dal**: ₹100 / kg\n\n" +
+                           "Simply click **Add** on any item to add it to your shopping basket! 🛍️";
+            } else if (lower.includes("delivery") || lower.includes("charge") || lower.includes("fee") || lower.includes("km") || lower.includes("distance") || lower.includes("map")) {
+                response = "Our store is located at **Indradhanu Market, Nayapalli, Bhubaneswar** 📍. We calculate delivery charges dynamically:\n" +
+                           "- **Rate**: ₹2.00 per kilometer\n" +
+                           "- **Delivery Radius**: Up to 20 km max\n\n" +
+                           "When you checkout, you can visually pin your location on our **interactive Leaflet Map**! The system will auto-calculate distance and add the delivery fee to your grand total seamlessly. 🚚";
+            } else if (lower.includes("payment") || lower.includes("upi") || lower.includes("cash") || lower.includes("pay") || lower.includes("cod")) {
+                response = "We offer two convenient payment options at checkout:\n" +
+                           "1. 💵 **Cash on Delivery (COD)**: Pay the operator directly when the grains arrive at your doorstep.\n" +
+                           "2. 📱 **UPI Online Transfer**: Scan the QR code, upload your transaction receipt snapshot directly, and submit. The shopkeeper will verify it instantly! ⚡";
+            } else if (lower.includes("offer") || lower.includes("discount") || lower.includes("deal") || lower.includes("special")) {
+                response = "✨ **Today's Special Store Offers**:\n" +
+                           "- **10% OFF** on Organic Moog Dal bulk purchases!\n" +
+                           "- **Free Delivery** estimates if you pick up directly from our storefront!\n" +
+                           "- Aromatic Superfine Rice has been restocked direct from farm millings at a special price of just ₹55/kg!\n\n" +
+                           "Add them to your basket today! 🌾";
+            } else if (lower.includes("basmati") || lower.includes("biryani") || lower.includes("aromatic") || lower.includes("best rice")) {
+                response = "For special occasions and biryani, we highly recommend our **Special Basmati Rice (₹120/kg)** or **Premium Biryani Rice (₹135/kg)**. They feature extra-long grains and exquisite natural aroma! For daily home meals, **Laxmi Premium Grains (₹65/kg)** is a household favorite. 🌾";
+            } else if (lower.includes("dal") || lower.includes("pulses") || lower.includes("moog") || lower.includes("harada")) {
+                response = "We stock nutrient-dense, high-protein **Organic Moog Dal (₹100/kg)** which is hand-sorted and unpolished to retain 100% natural nourishment. Perfect for a healthy family meal! 🍲";
+            } else if (lower.includes("order") || lower.includes("how to buy") || lower.includes("checkout")) {
+                response = "It is extremely easy to order!\n" +
+                           "1. Click **Add** on your favorite rice or dals.\n" +
+                           "2. Open **My Cart** in the top right.\n" +
+                           "3. Click **Proceed to Checkout**.\n" +
+                           "4. Pin your location on the Leaflet Map, select a payment method, and click **Verify & Place Order**!\n\n" +
+                           "Once placed, the shopkeeper receives it in real-time, processes your request, and contacts you! 🛒";
+            } else if (lower.includes("contact") || lower.includes("owner") || lower.includes("phone") || lower.includes("number") || lower.includes("whatsapp")) {
+                response = "You can connect with the store manager directly:\n" +
+                           "- 📞 **Phone Call**: +91 9776400523\n" +
+                           "- 💬 **WhatsApp**: +91 9078445116\n" +
+                           "- 📍 **Address**: Indradhanu Market, IRC Village, Nayapalli, Bhubaneswar, Odisha\n\n" +
+                           "We are happy to answer bulk wholesale questions! 🌾";
+            } else {
+                response = "I appreciate your message! I'm constantly learning about premium grains. If you have questions about rice types, dals, delivery estimation (₹2/km), or online UPI payments, please ask! Or you can directly connect with our shop operator at **+91 9776400523**! 🌾";
+            }
+
+            appendBotMessage(response);
+        }, 800);
+    }
+
+    // Input form submit handler
+    if (chatbotInputForm) {
+        chatbotInputForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const text = chatbotUserInput.value.trim();
+            if (!text) return;
+
+            appendUserMessage(text);
+            chatbotUserInput.value = "";
+            processUserMessage(text);
+        });
+    }
+
+    // Prompt Chips quick click handler
+    if (chatbotPromptContainer) {
+        chatbotPromptContainer.addEventListener("click", (e) => {
+            const chip = e.target.closest(".chat-prompt-chip");
+            if (!chip) return;
+
+            const query = chip.getAttribute("data-query");
+            appendUserMessage(query);
+            processUserMessage(query);
+        });
+    }
+
+    // Load initial conversation states
+    initializeChatbot();
 
     // ----------------------------------------------------
     // INITIALIZATION RUN

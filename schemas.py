@@ -30,6 +30,7 @@ class UserCreate(BaseModel):
     email: str
     password: str
     fullname: str
+    phone_number: str
 
 class UserLogin(BaseModel):
     username: str
@@ -40,6 +41,7 @@ class UserResponse(BaseModel):
     username: str
     email: str
     fullname: str
+    phone_number: str
 
     class Config:
         from_attributes = True
@@ -55,6 +57,7 @@ class OrderCreate(BaseModel):
     payment_method: Optional[str] = "COD"
     order_status: Optional[str] = "Pending Approval"
     receipt_image_url: Optional[str] = None
+    phone_number: Optional[str] = ""
 
 class OrderResponse(OrderCreate):
     id: int

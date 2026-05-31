@@ -19,7 +19,8 @@
         "delivery_charge": null,
         "payment_method": "COD",
         "order_status": "Rejected",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 2,
@@ -41,7 +42,8 @@
         "delivery_charge": null,
         "payment_method": "COD",
         "order_status": "Rejected",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 3,
@@ -69,7 +71,8 @@
         "delivery_charge": null,
         "payment_method": "COD",
         "order_status": "Rejected",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 4,
@@ -97,7 +100,8 @@
         "delivery_charge": null,
         "payment_method": "COD",
         "order_status": "Rejected",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 5,
@@ -125,7 +129,8 @@
         "delivery_charge": null,
         "payment_method": "COD",
         "order_status": "Rejected",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 6,
@@ -153,7 +158,8 @@
         "delivery_charge": 12.4,
         "payment_method": "COD",
         "order_status": "Rejected",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 7,
@@ -175,7 +181,8 @@
         "delivery_charge": 305.58,
         "payment_method": "COD",
         "order_status": "Rejected",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 8,
@@ -203,7 +210,8 @@
         "delivery_charge": 12.4,
         "payment_method": "COD",
         "order_status": "Rejected",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 9,
@@ -225,7 +233,8 @@
         "delivery_charge": 305.58,
         "payment_method": "COD",
         "order_status": "Rejected",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 10,
@@ -253,7 +262,8 @@
         "delivery_charge": 12.4,
         "payment_method": "COD",
         "order_status": "Rejected",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 11,
@@ -275,7 +285,8 @@
         "delivery_charge": 305.64,
         "payment_method": "COD",
         "order_status": "Rejected",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 12,
@@ -303,7 +314,8 @@
         "delivery_charge": 12.4,
         "payment_method": "UPI",
         "order_status": "Approved",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 13,
@@ -325,7 +337,8 @@
         "delivery_charge": 23.0,
         "payment_method": "COD",
         "order_status": "Approved",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 14,
@@ -353,7 +366,8 @@
         "delivery_charge": 12.4,
         "payment_method": "UPI",
         "order_status": "Approved",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 15,
@@ -374,7 +388,8 @@
         "delivery_charge": 2.0,
         "payment_method": "UPI",
         "order_status": "Approved",
-        "receipt_image_url": "/static/uploads/receipts/test_receipt.png"
+        "receipt_image_url": "/static/uploads/receipts/test_receipt.png",
+        "phone_number": ""
     },
     {
         "id": 16,
@@ -404,7 +419,8 @@
         "delivery_charge": 23.0,
         "payment_method": "COD",
         "order_status": "Approved",
-        "receipt_image_url": null
+        "receipt_image_url": null,
+        "phone_number": ""
     },
     {
         "id": 17,
@@ -425,7 +441,8 @@
         "delivery_charge": 2.0,
         "payment_method": "UPI",
         "order_status": "Approved",
-        "receipt_image_url": "/static/uploads/receipts/test_receipt.png"
+        "receipt_image_url": "/static/uploads/receipts/test_receipt.png",
+        "phone_number": ""
     },
     {
         "id": 18,
@@ -446,7 +463,8 @@
         "delivery_charge": 2.0,
         "payment_method": "UPI",
         "order_status": "Approved",
-        "receipt_image_url": "/static/uploads/receipts/test_receipt.png"
+        "receipt_image_url": "/static/uploads/receipts/test_receipt.png",
+        "phone_number": ""
     },
     {
         "id": 19,
@@ -467,6 +485,121 @@
         "delivery_charge": 2.0,
         "payment_method": "UPI",
         "order_status": "Approved",
-        "receipt_image_url": "/static/uploads/receipts/test_receipt.png"
+        "receipt_image_url": "/static/uploads/receipts/test_receipt.png",
+        "phone_number": ""
+    },
+    {
+        "id": 20,
+        "user_id": 12,
+        "items": [
+            {
+                "id": 1,
+                "name": "Dawat Rice",
+                "price": 95,
+                "image": "/media/profile_pics/dawat.png",
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 118.0,
+        "created_at": "2026-05-31 22:08:20",
+        "delivery_address": "IRC Village, Nayapalli, Bhubaneswar, Odisha 751015",
+        "distance_km": 11.5,
+        "delivery_charge": 23.0,
+        "payment_method": "COD",
+        "order_status": "Rejected",
+        "receipt_image_url": null,
+        "phone_number": ""
+    },
+    {
+        "id": 21,
+        "user_id": 12,
+        "items": [
+            {
+                "id": 1,
+                "name": "Dawat Rice",
+                "price": 95,
+                "image": "/media/profile_pics/dawat.png",
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 118.0,
+        "created_at": "2026-05-31 22:11:12",
+        "delivery_address": "IRC Village, Nayapalli, Bhubaneswar, Odisha 751015",
+        "distance_km": 11.5,
+        "delivery_charge": 23.0,
+        "payment_method": "UPI",
+        "order_status": "Rejected",
+        "receipt_image_url": "/static/uploads/receipts/1780245669_Screenshot_2026-05-31_221100.png",
+        "phone_number": ""
+    },
+    {
+        "id": 22,
+        "user_id": 13,
+        "items": [
+            {
+                "id": 2,
+                "name": "Organic Moog Dal",
+                "price": 100,
+                "image": "/media/profile_pics/organic_moong_dal.png",
+                "unit": "kg",
+                "quantity": 2
+            }
+        ],
+        "total_price": 202.64,
+        "created_at": "2026-05-31 22:21:33",
+        "delivery_address": "Ward 16, North Zone, Bhubaneswar Municipal Corporation, Bhubaneswar (M.Corp.), Khordha, Odisha, 751023, India",
+        "distance_km": 1.32,
+        "delivery_charge": 2.64,
+        "payment_method": "UPI",
+        "order_status": "Approved",
+        "receipt_image_url": "/static/uploads/receipts/1780246286_Screenshot_2026-05-31_221100.png",
+        "phone_number": "9078445116"
+    },
+    {
+        "id": 23,
+        "user_id": 13,
+        "items": [
+            {
+                "id": 2,
+                "name": "Organic Moog Dal",
+                "price": 100,
+                "unit": "kg",
+                "quantity": 2
+            }
+        ],
+        "total_price": 5000.0,
+        "created_at": "2026-05-31 22:39:46",
+        "delivery_address": "Test Ward 16, Bhubaneswar, Odisha, 751023, India",
+        "distance_km": 1.32,
+        "delivery_charge": 2.64,
+        "payment_method": "UPI",
+        "order_status": "Approved",
+        "receipt_image_url": "/static/uploads/receipts/1780246286_Screenshot_2026-05-31_221100.png",
+        "phone_number": "9078445116"
+    },
+    {
+        "id": 24,
+        "user_id": 13,
+        "items": [
+            {
+                "id": 1,
+                "name": "Dawat Rice",
+                "price": 95,
+                "image": "/media/profile_pics/dawat.png",
+                "unit": "kg",
+                "quantity": 2
+            }
+        ],
+        "total_price": 193.14,
+        "created_at": "2026-05-31 22:42:04",
+        "delivery_address": "Flyover, Ward 25, South West Zone, Bhubaneswar Municipal Corporation, Bhubaneswar (M.Corp.), Khordha, Odisha, 751012, India",
+        "distance_km": 1.57,
+        "delivery_charge": 3.14,
+        "payment_method": "UPI",
+        "order_status": "Rejected",
+        "receipt_image_url": "/static/uploads/receipts/1780247518_Screenshot_2026-05-31_221100.png",
+        "phone_number": "9078445116"
     }
 ]

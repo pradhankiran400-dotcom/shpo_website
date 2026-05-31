@@ -647,6 +647,42 @@
                 </div>
                 <div class="summary-icon" style="background-color: rgba(212,175,55,0.1); color: var(--accent);"><i data-lucide="indian-rupee"></i></div>
             </div>
+
+            <div class="summary-card" id="summary-users-card" style="cursor: pointer; transition: var(--transition-fast);">
+                <div class="summary-info">
+                    <h3>Registered Users</h3>
+                    <strong id="stat-users">0</strong>
+                </div>
+                <div class="summary-icon" style="background-color: rgba(45, 106, 79, 0.1); color: var(--primary);"><i data-lucide="users"></i></div>
+            </div>
+        </section>
+
+        <!-- Unified Orders Search & Filter Control Bar -->
+        <section id="orders-filter-bar" style="background: var(--bg-card); border: 1px solid rgba(27,67,50,0.08); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 16px; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 1px dashed rgba(27,67,50,0.06); padding-bottom: 12px;">
+                <h3 style="font-family: var(--font-heading); color: var(--primary-dark); font-size: 1.25rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="filter" style="width: 20px; height: 20px; color: var(--primary);"></i> Order Management & Search Filters
+                </h3>
+                <span style="font-size: 0.8rem; color: var(--text-light); font-weight: 600;">Use filters below to search all processed and pending checkouts.</span>
+            </div>
+            
+            <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                <!-- Live Text Search -->
+                <div style="position: relative; flex: 1; min-width: 260px;">
+                    <input type="text" id="order-search-input" placeholder="Search orders by ID, customer phone, address, items, payment..." style="width: 100%; padding: 10px 16px 10px 42px; font-family: var(--font-body); font-size: 0.9rem; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-xl); outline: none; transition: var(--transition-smooth); background-color: var(--bg-base);">
+                    <i data-lucide="search" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--text-light); pointer-events: none;"></i>
+                </div>
+                
+                <!-- Horizontal Filter Pills -->
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="order-filter-pills">
+                    <button class="filter-tab active order-filter-pill" data-status="all" style="padding: 8px 16px; font-size: 0.82rem; height: 36px; border: none; border-radius: var(--radius-xl); cursor: pointer; font-weight: 700;">All</button>
+                    <button class="filter-tab order-filter-pill" data-status="Pending Approval" style="padding: 8px 16px; font-size: 0.82rem; height: 36px; border: none; border-radius: var(--radius-xl); cursor: pointer; font-weight: 700;">Pending</button>
+                    <button class="filter-tab order-filter-pill" data-status="Approved" style="padding: 8px 16px; font-size: 0.82rem; height: 36px; border: none; border-radius: var(--radius-xl); cursor: pointer; font-weight: 700;">Approved</button>
+                    <button class="filter-tab order-filter-pill" data-status="Rejected" style="padding: 8px 16px; font-size: 0.82rem; height: 36px; border: none; border-radius: var(--radius-xl); cursor: pointer; font-weight: 700;">Rejected</button>
+                    <button class="filter-tab order-filter-pill" data-status="UPI" style="padding: 8px 16px; font-size: 0.82rem; height: 36px; border: none; border-radius: var(--radius-xl); cursor: pointer; font-weight: 700;">📱 UPI</button>
+                    <button class="filter-tab order-filter-pill" data-status="COD" style="padding: 8px 16px; font-size: 0.82rem; height: 36px; border: none; border-radius: var(--radius-xl); cursor: pointer; font-weight: 700;">💵 COD</button>
+                </div>
+            </div>
         </section>
 
         <!-- Pending Section -->
@@ -679,6 +715,26 @@
                     <span>🌾</span>
                     <h4>No history recorded yet</h4>
                     <p>Processed orders will appear in this section.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Customers Directory Section -->
+        <section id="customers-directory-section" style="margin-top: 16px;">
+            <div class="orders-section-header" style="flex-wrap: wrap; gap: 12px;">
+                <h2>Registered Customers Directory (<span id="users-count-title">0</span>)</h2>
+                <div style="position: relative; width: 100%; max-width: 300px;">
+                    <input type="text" id="user-search-input" placeholder="Search by name, email, phone..." style="width: 100%; padding: 8px 16px 8px 38px; font-family: var(--font-body); font-size: 0.85rem; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-xl); outline: none; transition: var(--transition-fast);">
+                    <i data-lucide="search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-light); pointer-events: none;"></i>
+                </div>
+            </div>
+            
+            <div class="orders-grid" id="users-grid">
+                <!-- Dynamically populated -->
+                <div class="empty-orders">
+                    <span>👥</span>
+                    <h4>No customers registered yet</h4>
+                    <p>When users register on your site, they will appear in this list.</p>
                 </div>
             </div>
         </section>
@@ -766,6 +822,10 @@
 
             let allOrders = [];
             let knownPendingIds = null;
+            let allUsers = [];
+            let userFilterQuery = "";
+            let orderFilterStatus = "all";
+            let orderSearchQuery = "";
 
             // Request desktop OS notification permissions on admin load
             if (window.Notification && Notification.permission === "default") {
@@ -901,15 +961,52 @@
 
             // Render dashboard elements
             function renderDashboard() {
-                const pendingOrders = allOrders.filter(o => o.order_status === "Pending Approval");
-                const approvedOrders = allOrders.filter(o => o.order_status === "Approved");
-                const otherOrders = allOrders.filter(o => o.order_status !== "Pending Approval");
+                const rawPendingOrders = allOrders.filter(o => o.order_status === "Pending Approval");
+                const rawApprovedOrders = allOrders.filter(o => o.order_status === "Approved");
+
+                // Filter orders dynamically based on search & pill inputs
+                const filteredOrders = allOrders.filter(order => {
+                    // 1. Status Pills Filter
+                    if (orderFilterStatus !== "all") {
+                        if (orderFilterStatus === "UPI" || orderFilterStatus === "COD") {
+                            if (order.payment_method !== orderFilterStatus) return false;
+                        } else {
+                            if (order.order_status !== orderFilterStatus) return false;
+                        }
+                    }
+
+                    // 2. Text Query Search
+                    if (orderSearchQuery.trim() !== "") {
+                        const query = orderSearchQuery.toLowerCase().trim();
+                        const idMatch = String(order.id).includes(query);
+                        const phoneMatch = (order.phone_number || "").toLowerCase().includes(query);
+                        const addressMatch = (order.delivery_address || "").toLowerCase().includes(query);
+                        const paymentMatch = (order.payment_method || "").toLowerCase().includes(query);
+                        const statusMatch = (order.order_status || "").toLowerCase().includes(query);
+                        
+                        let items = [];
+                        try {
+                            items = order.items_json ? (typeof order.items_json === 'string' ? JSON.parse(order.items_json) : order.items_json) : [];
+                        } catch(e) {}
+                        const itemsMatch = items.some(item => (item.name || "").toLowerCase().includes(query));
+
+                        if (!idMatch && !phoneMatch && !addressMatch && !paymentMatch && !statusMatch && !itemsMatch) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                });
+
+                const pendingOrders = filteredOrders.filter(o => o.order_status === "Pending Approval");
+                const approvedOrders = filteredOrders.filter(o => o.order_status === "Approved");
+                const otherOrders = filteredOrders.filter(o => o.order_status !== "Pending Approval");
 
                 // Track new pending orders for real-time awareness alerts
                 if (knownPendingIds === null) {
-                    knownPendingIds = new Set(pendingOrders.map(o => o.id));
+                    knownPendingIds = new Set(rawPendingOrders.map(o => o.id));
                 } else {
-                    pendingOrders.forEach(order => {
+                    rawPendingOrders.forEach(order => {
                         if (!knownPendingIds.has(order.id)) {
                             knownPendingIds.add(order.id);
                             
@@ -941,10 +1038,10 @@
                 }
 
                 // Update Stats
-                if (statPending) statPending.innerText = pendingOrders.length;
-                if (statApproved) statApproved.innerText = approvedOrders.length;
+                if (statPending) statPending.innerText = rawPendingOrders.length;
+                if (statApproved) statApproved.innerText = rawApprovedOrders.length;
                 
-                const totalSales = approvedOrders.reduce((sum, o) => sum + o.total_price, 0);
+                const totalSales = rawApprovedOrders.reduce((sum, o) => sum + o.total_price, 0);
                 if (statSales) statSales.innerText = `₹${totalSales.toFixed(2)}`;
 
                 // 1. Render Pendings
@@ -1001,6 +1098,10 @@
                                     <span style="display:block; font-size:0.75rem; color:var(--text-light); margin-top:4px;">
                                         Distance: ${(order.distance_km || 0).toFixed(1)} km | Fee: ₹${(order.delivery_charge || 0).toFixed(2)}
                                     </span>
+                                </div>
+                                <div style="font-size:0.8rem; color: var(--primary-dark); font-weight: 700; margin-top: -4px; margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
+                                    <i data-lucide="phone" style="width: 14px; height: 14px; color: var(--primary);"></i>
+                                    <span>Contact Number: <strong style="color: var(--primary-light);">${order.phone_number || 'N/A'}</strong></span>
                                 </div>
                                 <div class="order-items-box">
                                     ${itemsHTML}
@@ -1063,6 +1164,10 @@
                                 </div>
                                 <div class="order-items-box">
                                     ${itemsHTML}
+                                </div>
+                                <div style="font-size:0.75rem; color: var(--primary-dark); font-weight: 600; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+                                    <i data-lucide="phone" style="width: 12px; height: 12px; color: var(--primary);"></i>
+                                    <span>Phone: ${order.phone_number || 'N/A'}</span>
                                 </div>
                                 <div class="order-totals" style="margin-top: 4px; padding-top: 8px;">
                                     <span class="payment-desc" style="font-size:0.7rem;">${order.payment_method}</span>
@@ -1352,12 +1457,156 @@
 
             // Refresh actions
             if (refreshBtn) {
-                refreshBtn.onclick = () => fetchOrders();
+                refreshBtn.onclick = () => {
+                    fetchOrders();
+                    fetchUsers();
+                };
             }
 
-            // Initial fetch & poll every 10 seconds to auto-refresh pending queue!
+            // Fetch users from API
+            function fetchUsers() {
+                fetch("/api/users/")
+                .then(res => {
+                    if (!res.ok) throw new Error("Failed to load users");
+                    return res.json();
+                })
+                .then(users => {
+                    allUsers = users;
+                    renderUsers();
+                })
+                .catch(err => {
+                    console.error("Error fetching users:", err);
+                });
+            }
+
+            // Render Registered Customers Directory Section
+            function renderUsers() {
+                const statUsersElement = document.getElementById("stat-users");
+                const usersCountTitle = document.getElementById("users-count-title");
+                const usersGrid = document.getElementById("users-grid");
+                
+                if (statUsersElement) statUsersElement.innerText = allUsers.length;
+                if (usersCountTitle) usersCountTitle.innerText = allUsers.length;
+                
+                if (!usersGrid) return;
+                
+                const filteredUsers = allUsers.filter(user => {
+                    const name = (user.fullname || "").toLowerCase();
+                    const username = (user.username || "").toLowerCase();
+                    const email = (user.email || "").toLowerCase();
+                    const phone = (user.phone_number || "").toLowerCase();
+                    const query = userFilterQuery.toLowerCase();
+                    return name.includes(query) || username.includes(query) || email.includes(query) || phone.includes(query);
+                });
+                
+                if (filteredUsers.length === 0) {
+                    usersGrid.innerHTML = `
+                        <div class="empty-orders" style="grid-column: 1 / -1;">
+                            <span>🔍</span>
+                            <h4>No matching customers found</h4>
+                            <p>Try searching another keyword or clear the search input.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                usersGrid.innerHTML = "";
+                filteredUsers.forEach(user => {
+                    const initials = (user.fullname || "U").trim().charAt(0).toUpperCase();
+                    const phoneVal = user.phone_number || "N/A";
+                    const isPhoneValid = phoneVal !== "N/A" && phoneVal.trim() !== "";
+                    
+                    const card = `
+                        <div class="order-card" style="padding: 20px; display: flex; flex-direction: column; gap: 12px; transition: var(--transition-normal);">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary-ultra-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.25rem; border: 1.5px solid rgba(27,67,50,0.08);">
+                                    ${initials}
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <h4 style="color: var(--primary-dark); font-weight: 700; font-size: 1rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.fullname}</h4>
+                                    <span style="font-size: 0.75rem; color: var(--text-light); display: block; margin-top: 1px;">@${user.username}</span>
+                                </div>
+                            </div>
+                            
+                            <div style="font-size: 0.82rem; color: var(--text-medium); display: flex; flex-direction: column; gap: 6px; border-top: 1px dashed rgba(27,67,50,0.08); padding-top: 10px; margin-top: 2px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <i data-lucide="mail" style="width: 14px; height: 14px; color: var(--primary-light); flex-shrink: 0;"></i>
+                                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;" title="${user.email}">${user.email}</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <i data-lucide="phone" style="width: 14px; height: 14px; color: var(--primary-light); flex-shrink: 0;"></i>
+                                    <span>${phoneVal}</span>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 8px; margin-top: 6px;">
+                                <a href="${isPhoneValid ? 'tel:' + phoneVal : '#'}" 
+                                   class="btn btn-outline" 
+                                   style="height: 34px; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; border: 1.5px solid rgba(27,67,50,0.15); color: var(--primary-dark); pointer-events: ${isPhoneValid ? 'auto' : 'none'}; opacity: ${isPhoneValid ? 1 : 0.5};">
+                                    <i data-lucide="phone-call" style="width: 13px; height: 13px;"></i> Call
+                                </a>
+                                <a href="${isPhoneValid ? 'https://api.whatsapp.com/send?phone=91' + phoneVal : '#'}" 
+                                   target="_blank" 
+                                   class="btn" 
+                                   style="height: 34px; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; background-color: #25D366; color: white; border: none; pointer-events: ${isPhoneValid ? 'auto' : 'none'}; opacity: ${isPhoneValid ? 1 : 0.5}; font-weight: 700;">
+                                    <i data-lucide="message-square" style="width: 13px; height: 13px;"></i> WhatsApp
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    usersGrid.insertAdjacentHTML("beforeend", card);
+                });
+                
+                if (window.lucide) window.lucide.createIcons();
+            }
+
+            // Bind user search filter event
+            const userSearchInput = document.getElementById("user-search-input");
+            if (userSearchInput) {
+                userSearchInput.addEventListener("input", (e) => {
+                    userFilterQuery = e.target.value;
+                    renderUsers();
+                });
+            }
+
+            // Bind order text search event listener
+            const orderSearchInput = document.getElementById("order-search-input");
+            if (orderSearchInput) {
+                orderSearchInput.addEventListener("input", (e) => {
+                    orderSearchQuery = e.target.value;
+                    renderDashboard();
+                });
+            }
+
+            // Bind order filter pills click handlers
+            const filterPills = document.querySelectorAll(".order-filter-pill");
+            filterPills.forEach(pill => {
+                pill.addEventListener("click", () => {
+                    filterPills.forEach(p => p.classList.remove("active"));
+                    pill.classList.add("active");
+                    orderFilterStatus = pill.getAttribute("data-status");
+                    renderDashboard();
+                });
+            });
+
+            // Bind stats card click to scroll down smoothly to customers directory section
+            const usersCard = document.getElementById("summary-users-card");
+            if (usersCard) {
+                usersCard.addEventListener("click", () => {
+                    const section = document.getElementById("customers-directory-section");
+                    if (section) {
+                        section.scrollIntoView({ behavior: "smooth" });
+                    }
+                });
+            }
+
+            // Initial fetch & poll every 10 seconds to auto-refresh pending queues!
             fetchOrders();
-            setInterval(fetchOrders, 10000);
+            fetchUsers();
+            setInterval(() => {
+                fetchOrders();
+                fetchUsers();
+            }, 10000);
         });
     </script>
 </body>

@@ -40,7 +40,8 @@ def sync_users_to_file(db: Session):
                 "id": user.id,
                 "username": user.username,
                 "email": user.email,
-                "fullname": user.fullname
+                "fullname": user.fullname,
+                "phone_number": user.phone_number
             })
         with open("users.json", "w", encoding="utf-8") as f:
             json.dump(users_list, f, indent=4, ensure_ascii=False)
@@ -65,7 +66,8 @@ def sync_orders_to_file(db: Session):
                 "delivery_charge": order.delivery_charge,
                 "payment_method": order.payment_method,
                 "order_status": order.order_status,
-                "receipt_image_url": order.receipt_image_url
+                "receipt_image_url": order.receipt_image_url,
+                "phone_number": order.phone_number
             })
         with open("orders.json", "w", encoding="utf-8") as f:
             json.dump(orders_list, f, indent=4, ensure_ascii=False)
@@ -201,6 +203,206 @@ def add_new_product(product_data: ProductCreate, db: Session = Depends(get_db)):
 
 @app.post("/api/orders/", response_model=OrderResponse)
 def create_new_order(order_data: OrderCreate, db: Session = Depends(get_db)):
+    # ----------------------------------------------------
+    # LOCAL PYTHON OCR RECEIPT AMOUNT VALIDATION
+    # ----------------------------------------------------
+    if order_data.payment_method == "UPI" and order_data.receipt_image_url:
+        relative_path = order_data.receipt_image_url.lstrip("/")
+        if os.path.exists(relative_path):
+            try:
+                from PIL import Image
+                import re
+                import shutil
+
+                # ----------------------------------------------------
+                # RECEIPT FORENSICS: ASPECT RATIO CHECK
+                # ----------------------------------------------------
+                img = Image.open(relative_path)
+                width, height = img.size
+                print(f"[SECURITY FORENSICS]: Verifying image dimensions: {width}x{height}")
+                if width >= height:
+                    error_msg = (
+                        "Security Verification Failed: The uploaded receipt image appears to be in landscape or square format. "
+                        "UPI payment screenshots (Google Pay, PhonePe, Paytm, etc.) must be vertical portrait mobile screenshots. "
+                        "Please upload a full, unedited mobile screenshot of your payment receipt."
+                    )
+                    print(f"[SECURITY ALERT]: Blocked receipt due to landscape dimensions ({width}x{height})")
+                    raise HTTPException(status_code=400, detail=error_msg)
+
+                # ----------------------------------------------------
+                # RECEIPT FORENSICS: METADATA EDITOR SOFTWARE CHECK
+                # ----------------------------------------------------
+                is_edited = False
+                editor_signature = ""
+                try:
+                    exif_data = img._getexif()
+                    if exif_data:
+                        from PIL.ExifTags import TAGS
+                        for tag, value in exif_data.items():
+                            tag_name = TAGS.get(tag, tag)
+                            if tag_name in ("Software", "ImageHistory", "ProcessingSoftware", "Artist"):
+                                val_str = str(value).lower()
+                                suspicious_editors = [
+                                    "photoshop", "picsart", "pixellab", "canva", "gimp", 
+                                    "lightroom", "snapseed", "phonto", "editor", "paint.net"
+                                ]
+                                for editor in suspicious_editors:
+                                    if editor in val_str:
+                                        is_edited = True
+                                        editor_signature = f"{tag_name}: {value}"
+                                        break
+                except Exception as ex_err:
+                    print(f"[METADATA SCAN WARNING]: Could not read EXIF tags: {ex_err}")
+
+                if is_edited:
+                    error_msg = (
+                        f"Security Alert: Digital forensics scan detected that this receipt has been saved or modified "
+                        f"using image editing software ({editor_signature}). "
+                        f"To protect against fraud, edited receipts are strictly blocked! "
+                        f"Please upload an authentic, direct, unedited screenshot of your UPI app transaction page."
+                    )
+                    print(f"[SECURITY ALERT]: Blocked edited receipt. Editing signature: {editor_signature}")
+                    raise HTTPException(status_code=400, detail=error_msg)
+
+                # ----------------------------------------------------
+                # LOCAL PYTHON OCR VERIFICATION
+                # ----------------------------------------------------
+                import pytesseract
+                
+                # Auto-detect Tesseract binary on Windows standard paths
+                if not shutil.which("tesseract"):
+                    std_win_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+                    if os.path.exists(std_win_path):
+                        pytesseract.pytesseract.tesseract_cmd = std_win_path
+
+                # Run local OCR
+                ocr_text = pytesseract.image_to_string(img)
+                
+                print("\n[LOCAL OCR PROCESSING] UPI Receipt Screenshot:")
+                print("--------------------------------------------------")
+                print(ocr_text.strip()[:600])
+                print("--------------------------------------------------")
+
+                # ----------------------------------------------------
+                # RECEIPT FORENSICS: UPI KEYWORD STRUCTURE CHECK
+                # ----------------------------------------------------
+                ocr_lower = ocr_text.lower()
+                upi_keywords = [
+                    "upi", "transaction", "utr", "ref", "completed", "success", "paid",
+                    "transferred", "google pay", "gpay", "phonepe", "paytm", "bhim", "sbi",
+                    "hdfc", "icici", "sent", "successful", "debited", "bank", "payment"
+                ]
+                has_upi_keywords = any(kw in ocr_lower for kw in upi_keywords)
+                if not has_upi_keywords:
+                    # Look for spaces stripped version just in case
+                    no_spaces_lower = re.sub(r'\s+', '', ocr_lower)
+                    has_upi_keywords = any(kw in no_spaces_lower for kw in upi_keywords)
+
+                if not has_upi_keywords:
+                    error_msg = (
+                        "Security Verification Failed: The uploaded image does not appear to be a valid mobile "
+                        "UPI payment receipt. No payment transaction markers (e.g. UPI, UTR, Success, PhonePe, Paytm, GPay) "
+                        "were found in the image. Please upload a authentic, direct transaction status screenshot."
+                    )
+                    print("[SECURITY ALERT]: Blocked image. No UPI payment receipt keywords found in OCR text.")
+                    raise HTTPException(status_code=400, detail=error_msg)
+
+                # ----------------------------------------------------
+                # RECEIPT FORENSICS: UTR TRANSACTION DEDUPLICATION
+                # ----------------------------------------------------
+                utrs = re.findall(r'\b\d{12}\b', ocr_text)
+                if not utrs:
+                    # Try stripping spaces/dots and searching again (e.g. "1234 5678 9012" or "1234.5678.9012")
+                    no_spaces = re.sub(r'[\s\.\-]+', '', ocr_text)
+                    utrs = re.findall(r'\b\d{12}\b', no_spaces)
+
+                detected_utr = None
+                if utrs:
+                    detected_utr = utrs[0]
+                    print(f"[UTR DETECTED]: Found UPI Transaction ID / UTR: {detected_utr}")
+                    
+                    # Verify against local flat-file deduplication registry
+                    registry_file = "used_utrs.txt"
+                    used_utrs = []
+                    if os.path.exists(registry_file):
+                        with open(registry_file, "r", encoding="utf-8") as f:
+                            used_utrs = [line.strip() for line in f.readlines() if line.strip()]
+                    
+                    if detected_utr in used_utrs:
+                        error_msg = (
+                            f"Security Alert: This payment transaction (UTR / Ref ID: {detected_utr}) has already "
+                            f"been used for a prior order! Reusing transaction receipts is strictly prohibited. "
+                            f"Please complete a new payment and upload a fresh, valid payment screenshot."
+                        )
+                        print(f"[SECURITY ALERT]: Duplicate UTR attempt blocked: {detected_utr}")
+                        raise HTTPException(status_code=400, detail=error_msg)
+
+                # ----------------------------------------------------
+                # AMOUNT MATCHING VALIDATION
+                # ----------------------------------------------------
+                target_amount = order_data.total_price
+                target_str = f"{target_amount:.2f}"
+                target_int = str(int(target_amount))
+
+                cleaned_text = ocr_text.replace(",", "")
+                cleaned_decimals = re.findall(r'\d+\.\d{2}', cleaned_text)
+                
+                matched = False
+                matched_val = ""
+
+                if target_str in ocr_text or target_str in cleaned_text:
+                    matched = True
+                    matched_val = target_str
+                else:
+                    for dec_str in cleaned_decimals:
+                        try:
+                            val = float(dec_str)
+                            if abs(val - target_amount) <= 1.00:
+                                matched = True
+                                matched_val = dec_str
+                                break
+                        except ValueError:
+                            continue
+
+                if not matched and len(target_int) >= 2:
+                    if target_int in ocr_text or target_int in cleaned_text:
+                        matched = True
+                        matched_val = target_int
+
+                if not matched:
+                    error_msg = (
+                        f"Verification Failed: The transaction amount extracted from "
+                        f"your uploaded UPI receipt does not match your order total of Rs. {target_amount:.2f}! "
+                        f"Please ensure you uploaded the correct payment receipt screenshot and try again."
+                    )
+                    print(f"[OCR MISMATCH]: Extracted text did not contain Rs. {target_amount:.2f}")
+                    raise HTTPException(status_code=400, detail=error_msg)
+                
+                print(f"[OCR VERIFICATION SUCCESSFUL]: Matched value {matched_val} with total Rs. {target_amount:.2f}\n")
+
+                # If validation passes, write UTR to registry file to prevent future reuse
+                if detected_utr:
+                    registry_file = "used_utrs.txt"
+                    with open(registry_file, "a", encoding="utf-8") as f:
+                        f.write(detected_utr + "\n")
+                    print(f"[UTR REGISTERED]: Added transaction ID {detected_utr} to used_utrs.txt registry.")
+
+            except ImportError:
+                print("\n[LOCAL OCR WARNING]: 'pytesseract' or 'PIL' is not installed locally.")
+                print("Running in Smart Simulation Mode...\n")
+            except pytesseract.TesseractNotFoundError:
+                print("\n[LOCAL OCR WARNING]: Tesseract OCR engine binaries are not installed on the system path.")
+                print("To activate real-time local text extraction verification, please download Tesseract from:")
+                print("https://github.com/UB-Mannheim/tesseract/wiki")
+                print("Running in Smart Simulation Mode...\n")
+            except HTTPException:
+                raise
+            except Exception as e:
+                print(f"\n[LOCAL OCR ERROR]: Unexpected error parsing receipt screenshot: {e}")
+                print("Running in Smart Simulation Mode...\n")
+        else:
+            print(f"\n[LOCAL OCR WARNING]: Uploaded receipt path '{relative_path}' not found on disk.")
+
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     new_order = models.Order(
         user_id=order_data.user_id,
@@ -212,7 +414,8 @@ def create_new_order(order_data: OrderCreate, db: Session = Depends(get_db)):
         delivery_charge=order_data.delivery_charge,
         payment_method=order_data.payment_method,
         order_status=order_data.order_status,
-        receipt_image_url=order_data.receipt_image_url
+        receipt_image_url=order_data.receipt_image_url,
+        phone_number=order_data.phone_number
     )
     db.add(new_order)
     db.commit()
@@ -231,6 +434,7 @@ def create_new_order(order_data: OrderCreate, db: Session = Depends(get_db)):
     if new_order.delivery_address:
         print(f"Delivery Address: {new_order.delivery_address}")
         print(f"Distance: {new_order.distance_km:.2f} km (Charge: Rs. {new_order.delivery_charge:.2f})")
+    print(f"Customer Phone Number: {new_order.phone_number}")
     print(f"Items Details: {new_order.items_json}\n")
     
     return new_order
@@ -240,6 +444,13 @@ def create_new_order(order_data: OrderCreate, db: Session = Depends(get_db)):
 def get_all_orders(db: Session = Depends(get_db)):
     result = db.execute(select(models.Order))
     return result.scalars().all()
+
+
+@app.get("/api/users/")
+def get_all_users(db: Session = Depends(get_db)):
+    result = db.execute(select(models.User))
+    users = result.scalars().all()
+    return [{"id": u.id, "username": u.username, "email": u.email, "fullname": u.fullname, "phone_number": u.phone_number} for u in users]
 
 
 @app.post("/api/register", response_model=UserResponse)
@@ -261,7 +472,8 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
         username=user_data.username,
         email=user_data.email,
         hashed_password=hashed_pwd,
-        fullname=user_data.fullname
+        fullname=user_data.fullname,
+        phone_number=user_data.phone_number
     )
     db.add(new_user)
     db.commit()

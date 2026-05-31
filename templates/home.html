@@ -483,6 +483,20 @@
                         </div>
                     </div>
 
+                    <!-- Interactive Mismatch & Forensics Re-Upload Banner -->
+                    <div id="receipt-mismatch-error-banner" style="display: none; background-color: #fff5f5; border: 1.5px solid #feb2b2; border-radius: var(--radius-md); padding: 14px; margin-top: 10px; margin-bottom: 16px; box-shadow: var(--shadow-sm); animation: slide-down-fade 0.3s cubic-bezier(0.19, 1, 0.22, 1) forwards;">
+                        <div style="display: flex; gap: 10px; align-items: flex-start; text-align: left;">
+                            <span style="font-size: 1.3rem; color: #e53e3e; line-height: 1;">⚠️</span>
+                            <div style="flex: 1;">
+                                <h4 style="font-family: var(--font-heading); color: #9b2c2c; font-weight: 700; font-size: 0.9rem; margin-bottom: 4px;">Receipt Verification Alert!</h4>
+                                <p id="receipt-mismatch-error-text" style="color: #c53030; font-size: 0.85rem; line-height: 1.45; margin-bottom: 6px;">The uploaded image failed our security verification checks.</p>
+                                <span style="font-size: 0.75rem; color: #742a2a; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 4px;">
+                                    👉 Please select a valid payment screenshot to re-upload.
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Custom Receipt Upload Input -->
                     <div id="receipt-upload-wrapper" style="margin-top: 16px; margin-bottom: 20px; border: 1.5px dashed rgba(27,67,50,0.15); padding: 16px; border-radius: var(--radius-md); background-color: var(--white); text-align: center;">
                         <label for="payment-receipt-input" style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 8px; cursor: pointer;">
@@ -560,6 +574,12 @@
                     <input type="email" id="reg-email" placeholder="Enter your email" required
                         style="width: 100%; padding: 10px 14px; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-sm); outline: none; font-family: var(--font-body); font-size: 0.9rem;">
                 </div>
+                <div class="form-group" style="text-align: left; margin-bottom: 12px;">
+                    <label
+                        style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 6px;">Phone Number (WhatsApp Target)</label>
+                    <input type="tel" id="reg-phone" placeholder="e.g. 9078445116" required
+                        style="width: 100%; padding: 10px 14px; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-sm); outline: none; font-family: var(--font-body); font-size: 0.9rem;">
+                </div>
                 <div class="form-group" style="text-align: left; margin-bottom: 20px;">
                     <label
                         style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 6px;">Password</label>
@@ -570,6 +590,33 @@
                     style="width: 100%; border-radius: var(--radius-sm);">Create Account</button>
             </form>
             <button class="close-auth-btn" id="close-auth"
+                style="position: absolute; top: 12px; right: 12px; background: transparent; border: none; color: var(--text-light); cursor: pointer; padding: 6px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: var(--transition-fast);"><i
+                    data-lucide="x" style="width: 18px; height: 18px;"></i></button>
+        </div>
+    </div>
+
+    <!-- Phone Verification OTP Modal -->
+    <div class="modal-overlay" id="otp-modal" style="z-index: 1100;">
+        <div class="modal-content" style="max-width: 380px; padding: 32px; text-align: center; position: relative;">
+            <div style="font-size: 2.5rem; margin-bottom: 16px;">📱</div>
+            <h3 style="font-family: var(--font-heading); color: var(--primary-dark); font-size: 1.4rem; margin-bottom: 8px;">Verify Your Phone</h3>
+            <p style="color: var(--text-medium); font-size: 0.85rem; margin-bottom: 20px;">We have sent a 6-digit verification code to <strong id="otp-phone-display" style="color: var(--primary);">9078445116</strong>. Enter it below to complete registration.</p>
+            
+            <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 20px;">
+                <input type="text" maxlength="6" id="otp-code-input" placeholder="••••••" style="width: 180px; padding: 12px; border: 1.5px solid rgba(27,67,50,0.15); border-radius: var(--radius-sm); outline: none; font-family: var(--font-body); font-size: 1.4rem; text-align: center; letter-spacing: 4px; font-weight: 700; color: var(--primary-dark); box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);">
+            </div>
+            
+            <!-- Mock SMS Toast Alert -->
+            <div id="mock-sms-toast" style="background-color: var(--primary-dark); color: white; padding: 14px; border-radius: var(--radius-sm); font-size: 0.82rem; margin-bottom: 24px; text-align: left; display: none; border-left: 4px solid var(--accent); box-shadow: var(--shadow-md); line-height: 1.4;">
+                <strong style="color: var(--accent);">💬 SMS SIMULATOR:</strong><br>
+                [Maa Bankeswari Store] Your registration OTP is <strong id="mock-otp-val" style="color: var(--white); font-size: 0.95rem; font-weight: 800; letter-spacing: 1px;">123456</strong>. Do not share this code.
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button type="button" class="btn btn-outline" id="otp-resend-btn" style="border-radius: var(--radius-sm); padding: 8px 16px; font-size: 0.85rem; height: 36px; cursor: pointer; flex: 1;">Resend</button>
+                <button type="button" class="btn btn-primary" id="otp-verify-btn" style="border-radius: var(--radius-sm); padding: 8px 24px; font-size: 0.85rem; height: 36px; cursor: pointer; flex: 2;">Verify & Register</button>
+            </div>
+            <button class="close-auth-btn" id="close-otp"
                 style="position: absolute; top: 12px; right: 12px; background: transparent; border: none; color: var(--text-light); cursor: pointer; padding: 6px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: var(--transition-fast);"><i
                     data-lucide="x" style="width: 18px; height: 18px;"></i></button>
         </div>
@@ -692,6 +739,57 @@
             <p>&copy; 2026 Maa Bankeswari Rice Store. All Rights Reserved. Crafted with love for pure food.</p>
         </div>
     </footer>
+
+    <!-- Aromatic Assistant Chatbot Widget ("Laxmi") -->
+    <div id="chatbot-container" style="position: fixed; bottom: 24px; right: 24px; z-index: 10000; font-family: var(--font-body);">
+        <!-- Floating Circular Chat Launcher Bubble -->
+        <button id="chatbot-launcher" title="Chat with Laxmi" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border: 2px solid var(--accent); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-lg); transition: var(--transition-smooth); outline: none; position: relative;">
+            <span class="mascot-emoji" style="font-size: 1.6rem; display: block; transition: transform 0.3s ease;">🌾</span>
+            <div class="launcher-pulse-ring"></div>
+        </button>
+
+        <!-- Glassmorphic Chat Window Box (Starts closed/hidden) -->
+        <div id="chatbot-window">
+            <!-- Chat Window Header -->
+            <div style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid rgba(27,67,50,0.1);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1px solid rgba(255, 255, 255, 0.25);">
+                        🌾
+                    </div>
+                    <div>
+                        <h4 style="font-size: 0.92rem; font-weight: 700; margin: 0; letter-spacing: 0.2px;">Laxmi — Store Assistant</h4>
+                        <span style="font-size: 0.72rem; color: var(--accent); font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                            <span style="width: 6px; height: 6px; background-color: #25D366; border-radius: 50%; display: inline-block;"></span> Online & Helpful
+                        </span>
+                    </div>
+                </div>
+                <button id="chatbot-close-btn" style="background: transparent; border: none; color: rgba(255,255,255,0.7); cursor: pointer; display: flex; align-items: center; padding: 4px; border-radius: 50%; transition: var(--transition-fast);">
+                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+
+            <!-- Chat Messages Area (Auto-scrolls) -->
+            <div id="chatbot-messages-log" style="flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; background: radial-gradient(circle at center, rgba(27, 67, 50, 0.01) 0%, transparent 100%);">
+                <!-- Greetings populated via JS -->
+            </div>
+
+            <!-- Quick Action Prompt Chips Wrapper -->
+            <div id="chatbot-prompt-container" style="padding: 8px 12px; display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; border-top: 1px dashed rgba(27,67,50,0.08); scrollbar-width: none; -ms-overflow-style: none;">
+                <button class="chat-prompt-chip" data-query="Best basmati rice?">🌾 Best Rice?</button>
+                <button class="chat-prompt-chip" data-query="How much for delivery?">🚚 Delivery Fee?</button>
+                <button class="chat-prompt-chip" data-query="Payment methods?">💳 How to Pay?</button>
+                <button class="chat-prompt-chip" data-query="Today's offers?">✨ Special Offers?</button>
+            </div>
+
+            <!-- Message Input Form -->
+            <form id="chatbot-input-form" style="border-top: 1px solid rgba(27,67,50,0.1); padding: 10px 12px; display: flex; gap: 8px; background: rgba(255,255,255,0.95); align-items: center;">
+                <input type="text" id="chatbot-user-input" placeholder="Type a message..." required style="flex: 1; height: 36px; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-xl); padding: 0 14px; font-family: var(--font-body); font-size: 0.88rem; outline: none; transition: var(--transition-smooth); background-color: var(--white);">
+                <button type="submit" style="width: 36px; height: 36px; border-radius: 50%; background-color: var(--primary); border: none; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; box-shadow: var(--shadow-sm); transition: var(--transition-fast);">
+                    <i data-lucide="send" style="width: 14px; height: 14px; margin-left: 2px;"></i>
+                </button>
+            </form>
+        </div>
+    </div>
 
     <!-- Javascript -->
     <script src="/static/js/app.js"></script>

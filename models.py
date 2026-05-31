@@ -9,6 +9,7 @@ class User(Base):
     email = Column(String, unique=True)
     hashed_password = Column(String)
     fullname = Column(String)
+    phone_number = Column(String, default="")
 
 
 class Product(Base):
@@ -48,3 +49,4 @@ class Order(Base):
     payment_method = Column(String, default="COD")
     order_status = Column(String, default="Pending Approval")
     receipt_image_url = Column(String, nullable=True)
+    phone_number = Column(String, default="")
