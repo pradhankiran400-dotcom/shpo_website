@@ -54,6 +54,7 @@ class OrderCreate(BaseModel):
     delivery_charge: Optional[float] = None
     payment_method: Optional[str] = "COD"
     order_status: Optional[str] = "Pending Approval"
+    receipt_image_url: Optional[str] = None
 
 class OrderResponse(OrderCreate):
     id: int

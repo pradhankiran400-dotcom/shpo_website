@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ----------------------------------------------------
     let cart = [];
     let currentUser = null;
+    let uploadedReceiptUrl = null;
 
     // Load user from localStorage
     function loadUser() {
@@ -535,6 +536,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let calculatedDeliveryCharge = 0;
     let selectedPaymentMethod = "COD";
 
+    // Checkout Selectors
     const checkoutFormModal = document.getElementById("checkout-form-modal");
     const closeCheckoutFormBtn = document.getElementById("close-checkout-form-btn");
     const checkoutAddressForm = document.getElementById("checkout-address-form");
@@ -549,6 +551,174 @@ document.addEventListener("DOMContentLoaded", () => {
     const checkoutDeliveryVal = document.getElementById("checkout-delivery-val");
     const checkoutGrandtotalVal = document.getElementById("checkout-grandtotal-val");
     const confirmPlaceOrderBtn = document.getElementById("confirm-place-order-btn");
+
+    // Leaflet Interactive Map State Variables
+    let checkoutMap = null;
+    let storeMarker = null;
+    let deliveryMarker = null;
+    let routeLine = null;
+
+    // Initialize interactive Leaflet map inside checkout modal
+    function initCheckoutMap() {
+        if (checkoutMap) {
+            // Map already created: trigger resize invalidation and reset pin states
+            setTimeout(() => {
+                checkoutMap.invalidateSize();
+                deliveryMarker.setLatLng([STORE_LAT, STORE_LNG]);
+                if (routeLine) {
+                    checkoutMap.removeLayer(routeLine);
+                    routeLine = null;
+                }
+                checkoutMap.setView([STORE_LAT, STORE_LNG], 14);
+            }, 150);
+            return;
+        }
+
+        try {
+            // Instantiate map
+            checkoutMap = L.map('checkout-map', {
+                zoomControl: true,
+                attributionControl: false
+            }).setView([STORE_LAT, STORE_LNG], 14);
+
+            // Add smooth tile layer (OpenStreetMap)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(checkoutMap);
+
+            // Elegant, animated DivIcons matching store's forest green & gold design theme
+            const storeIcon = L.divIcon({
+                className: 'store-custom-marker',
+                html: `<div style="background-color: var(--primary); border: 2px solid var(--accent); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: var(--shadow-md);">🌾</div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+
+            const deliveryIcon = L.divIcon({
+                className: 'delivery-custom-marker',
+                html: `<div style="background-color: var(--accent); border: 2px solid var(--primary-dark); color: var(--primary-dark); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; box-shadow: var(--shadow-md); transform-origin: bottom center; animation: marker-float 2.5s infinite ease-in-out;">📍</div>`,
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            });
+
+            // Inject CSS keyframes for marker floating micro-animation dynamically if not present
+            if (!document.getElementById("marker-float-style")) {
+                const style = document.createElement("style");
+                style.id = "marker-float-style";
+                style.innerHTML = `
+                    @keyframes marker-float {
+                        0%, 100% { transform: translateY(0); }
+                        50% { transform: translateY(-6px); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            // Fixed Store Marker
+            storeMarker = L.marker([STORE_LAT, STORE_LNG], { icon: storeIcon }).addTo(checkoutMap);
+            storeMarker.bindPopup(`
+                <div class="store-popup-title">🌾 Maa Bankeswari Store</div>
+                <div style="font-size: 0.72rem; color: var(--text-medium); margin-top: 4px;">Indradhanu Market, IRC Village</div>
+            `).openPopup();
+
+            // Draggable Delivery Pin
+            deliveryMarker = L.marker([STORE_LAT, STORE_LNG], {
+                icon: deliveryIcon,
+                draggable: true
+            }).addTo(checkoutMap);
+
+            deliveryMarker.bindPopup(`
+                <div class="delivery-popup-title">📍 Your Delivery Location</div>
+                <div style="font-size: 0.72rem; color: var(--text-medium); margin-top: 4px; font-weight: 700;">Drag me or click map to set delivery spot!</div>
+            `).openPopup();
+
+            // Dynamically redraw dotted connecting route path polyline
+            function updateRoutePolyline(latlng) {
+                const points = [
+                    [STORE_LAT, STORE_LNG],
+                    [latlng.lat, latlng.lng]
+                ];
+                if (routeLine) {
+                    routeLine.setLatLngs(points);
+                } else {
+                    routeLine = L.polyline(points, {
+                        color: '#1b4332',
+                        weight: 3.5,
+                        dashArray: '6, 8',
+                        opacity: 0.75
+                    }).addTo(checkoutMap);
+                }
+            }
+
+            // Reverse Geocoding through OpenStreetMap's Nominatim service
+            function reverseGeocodePosition(lat, lng) {
+                if (deliveryAddressInput) {
+                    deliveryAddressInput.value = "Fetching address details from map pin... ⏳";
+                }
+                
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`)
+                .then(res => {
+                    if (!res.ok) throw new Error("API Connection Failed");
+                    return res.json();
+                })
+                .then(data => {
+                    if (data && data.display_name) {
+                        if (deliveryAddressInput) {
+                            deliveryAddressInput.value = data.display_name;
+                        }
+                    } else {
+                        if (deliveryAddressInput) {
+                            deliveryAddressInput.value = `Pinned Coordinates (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error("OSM Reverse Geocode error:", err);
+                    if (deliveryAddressInput) {
+                        deliveryAddressInput.value = `Pinned Coordinates (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+                    }
+                });
+            }
+
+            // Unified location state transition
+            function executeLocationChange(latlng) {
+                deliveryMarker.setLatLng(latlng);
+                updateRoutePolyline(latlng);
+
+                const distance = calculateHaversineDistance(STORE_LAT, STORE_LNG, latlng.lat, latlng.lng);
+                applyCalculatedDistance(distance);
+
+                reverseGeocodePosition(latlng.lat, latlng.lng);
+            }
+
+            // Drag handler
+            deliveryMarker.on('dragend', () => {
+                const latlng = deliveryMarker.getLatLng();
+                executeLocationChange(latlng);
+                deliveryMarker.bindPopup(`
+                    <div class="delivery-popup-title">📍 Selected Location</div>
+                    <div style="font-size: 0.72rem; color: var(--text-medium); margin-top: 4px; font-weight: 700;">Distance: ${calculatedDistance.toFixed(1)} km</div>
+                `).openPopup();
+            });
+
+            // Map click handler
+            checkoutMap.on('click', (e) => {
+                executeLocationChange(e.latlng);
+                deliveryMarker.bindPopup(`
+                    <div class="delivery-popup-title">📍 Selected Location</div>
+                    <div style="font-size: 0.72rem; color: var(--text-medium); margin-top: 4px; font-weight: 700;">Distance: ${calculatedDistance.toFixed(1)} km</div>
+                `).openPopup();
+            });
+
+            // Safety layout tick
+            setTimeout(() => {
+                checkoutMap.invalidateSize();
+            }, 100);
+
+        } catch (error) {
+            console.error("Could not construct Leaflet interactive map:", error);
+        }
+    }
 
     function openCheckoutFormModal(subtotal) {
         if (checkoutFormModal) {
@@ -589,6 +759,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Reset payment selection state
         selectedPaymentMethod = "COD";
+        uploadedReceiptUrl = null;
         const paymentMethodCODInput = document.getElementById("payment-method-cod-label") ? document.getElementById("payment-method-cod-label").querySelector('input') : null;
         if (paymentMethodCODInput) paymentMethodCODInput.checked = true;
         
@@ -606,6 +777,56 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const distanceLimitAlert = document.getElementById("distance-limit-alert");
         if (distanceLimitAlert) distanceLimitAlert.style.display = "none";
+
+        // Initialize and display interactive map
+        initCheckoutMap();
+
+        // Proactively fetch high-accuracy browser geolocation to auto-center map pin
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    const dist = calculateHaversineDistance(STORE_LAT, STORE_LNG, lat, lon);
+
+                    // Check if within delivery zone to avoid auto-locking far away mock locations
+                    if (dist <= 20 && checkoutMap && deliveryMarker) {
+                        const latlng = { lat: lat, lng: lon };
+                        deliveryMarker.setLatLng(latlng);
+                        checkoutMap.setView([lat, lon], 14);
+                        
+                        const points = [[STORE_LAT, STORE_LNG], [lat, lon]];
+                        if (routeLine) {
+                            routeLine.setLatLngs(points);
+                        } else {
+                            routeLine = L.polyline(points, {
+                                color: '#1b4332',
+                                weight: 3.5,
+                                dashArray: '6, 8',
+                                opacity: 0.75
+                            }).addTo(checkoutMap);
+                        }
+
+                        applyCalculatedDistance(dist);
+
+                        if (deliveryAddressInput) {
+                            deliveryAddressInput.value = "Fetching current location address details... ⏳";
+                        }
+                        
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data && data.display_name && deliveryAddressInput) {
+                                deliveryAddressInput.value = data.display_name;
+                            }
+                        })
+                        .catch(err => console.error("Auto center geocode failed:", err));
+                    }
+                },
+                (err) => console.log("Standard browser auto-geolocation prompt skipped/denied."),
+                { enableHighAccuracy: true, timeout: 3500 }
+            );
+        }
     }
 
     function closeCheckoutFormModal() {
@@ -685,7 +906,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (proceedToPaymentBtn) proceedToPaymentBtn.disabled = false;
     }
 
-    // Geolocation detection click handler
+    // Geolocation detection click handler integrated with Leaflet map
     if (detectLocationBtn) {
         detectLocationBtn.addEventListener("click", () => {
             if (!navigator.geolocation) {
@@ -704,16 +925,63 @@ document.addEventListener("DOMContentLoaded", () => {
                     const lon = position.coords.longitude;
                     const dist = calculateHaversineDistance(STORE_LAT, STORE_LNG, lat, lon);
 
-                    if (deliveryAddressInput) {
-                        deliveryAddressInput.value = `GPS Coordinate Location (${lat.toFixed(5)}, ${lon.toFixed(5)})`;
+                    applyCalculatedDistance(dist);
+
+                    // Update Leaflet map and marker coordinates dynamically
+                    if (checkoutMap && deliveryMarker) {
+                        const latlng = { lat: lat, lng: lon };
+                        deliveryMarker.setLatLng(latlng);
+                        checkoutMap.setView([lat, lon], 15);
+
+                        // Update connecting dotted polyline
+                        const points = [[STORE_LAT, STORE_LNG], [lat, lon]];
+                        if (routeLine) {
+                            routeLine.setLatLngs(points);
+                        } else {
+                            routeLine = L.polyline(points, {
+                                color: '#1b4332',
+                                weight: 3.5,
+                                dashArray: '6, 8',
+                                opacity: 0.75
+                            }).addTo(checkoutMap);
+                        }
+
+                        deliveryMarker.bindPopup(`
+                            <div class="delivery-popup-title">📍 Detected Location</div>
+                            <div style="font-size: 0.72rem; color: var(--text-medium); margin-top: 4px;">Distance: ${dist.toFixed(1)} km</div>
+                        `).openPopup();
                     }
 
-                    applyCalculatedDistance(dist);
-                    showToast("GPS Coordinate location detected! 📍");
+                    // Perform reverse geocoding to fill in street address cleanly
+                    if (deliveryAddressInput) {
+                        deliveryAddressInput.value = "Translating coordinates to address... ⏳";
+                    }
 
-                    detectLocationBtn.disabled = false;
-                    detectLocationBtn.innerHTML = originalText;
-                    if (window.lucide) window.lucide.createIcons();
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.display_name && deliveryAddressInput) {
+                            deliveryAddressInput.value = data.display_name;
+                            showToast("Location resolved and address updated! 📍");
+                        } else {
+                            if (deliveryAddressInput) {
+                                deliveryAddressInput.value = `GPS Coordinate Location (${lat.toFixed(5)}, ${lon.toFixed(5)})`;
+                            }
+                            showToast("GPS location detected! 📍");
+                        }
+                    })
+                    .catch(err => {
+                        console.error("OSM Geocoding reverse resolution failed:", err);
+                        if (deliveryAddressInput) {
+                            deliveryAddressInput.value = `GPS Coordinate Location (${lat.toFixed(5)}, ${lon.toFixed(5)})`;
+                        }
+                        showToast("GPS location detected! 📍");
+                    })
+                    .finally(() => {
+                        detectLocationBtn.disabled = false;
+                        detectLocationBtn.innerHTML = originalText;
+                        if (window.lucide) window.lucide.createIcons();
+                    });
                 },
                 (error) => {
                     console.error("GPS detection error:", error);
@@ -728,7 +996,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Geocoding Manual Address Distance calculator click handler
+    // Geocoding Manual Address Distance calculator click handler integrated with Leaflet map
     if (calcDistanceBtn) {
         calcDistanceBtn.addEventListener("click", () => {
             const address = deliveryAddressInput ? deliveryAddressInput.value.trim() : "";
@@ -753,6 +1021,32 @@ document.addEventListener("DOMContentLoaded", () => {
                     const lon = parseFloat(data[0].lon);
                     const dist = calculateHaversineDistance(STORE_LAT, STORE_LNG, lat, lon);
                     applyCalculatedDistance(dist);
+
+                    // Update Leaflet map and marker coordinates dynamically based on search results
+                    if (checkoutMap && deliveryMarker) {
+                        const latlng = { lat: lat, lng: lon };
+                        deliveryMarker.setLatLng(latlng);
+                        checkoutMap.setView([lat, lon], 15);
+
+                        // Update connecting dotted polyline
+                        const points = [[STORE_LAT, STORE_LNG], [lat, lon]];
+                        if (routeLine) {
+                            routeLine.setLatLngs(points);
+                        } else {
+                            routeLine = L.polyline(points, {
+                                color: '#1b4332',
+                                weight: 3.5,
+                                dashArray: '6, 8',
+                                opacity: 0.75
+                            }).addTo(checkoutMap);
+                        }
+
+                        deliveryMarker.bindPopup(`
+                            <div class="delivery-popup-title">📍 Searched Pin</div>
+                            <div style="font-size: 0.72rem; color: var(--text-medium); margin-top: 4px;">Distance: ${dist.toFixed(1)} km</div>
+                        `).openPopup();
+                    }
+
                     showToast(`Real-time distance calculated: ${dist} km! 🌾`);
                 } else {
                     const fallbackDist = getEstimatedFallbackDistance(address);
@@ -854,7 +1148,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (upiInfoPanel) upiInfoPanel.style.display = "block";
             
             // For UPI, verify if a receipt image is uploaded
-            if (paymentReceiptInput && paymentReceiptInput.files && paymentReceiptInput.files.length > 0) {
+            if (uploadedReceiptUrl) {
                 if (confirmPlaceOrderBtn) confirmPlaceOrderBtn.disabled = false;
             } else {
                 if (confirmPlaceOrderBtn) confirmPlaceOrderBtn.disabled = true;
@@ -890,23 +1184,71 @@ document.addEventListener("DOMContentLoaded", () => {
         paymentReceiptInput.addEventListener("change", (e) => {
             if (e.target.files && e.target.files.length > 0) {
                 const file = e.target.files[0];
+                
+                // Pack file in FormData
+                const formData = new FormData();
+                formData.append("file", file);
+
                 if (receiptFilenameDisplay) {
-                    receiptFilenameDisplay.innerText = `📄 Loaded: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                    receiptFilenameDisplay.innerText = `⏳ Uploading: ${file.name}...`;
                     receiptFilenameDisplay.style.display = "block";
+                    receiptFilenameDisplay.style.color = "var(--text-medium)";
                 }
-                if (receiptUploadTrigger) {
-                    receiptUploadTrigger.innerHTML = `<i data-lucide="check-circle" style="width: 15px; height: 15px;"></i> Change Receipt`;
-                    if (window.lucide) window.lucide.createIcons();
+
+                if (confirmPlaceOrderBtn) {
+                    confirmPlaceOrderBtn.disabled = true;
+                    confirmPlaceOrderBtn.innerText = "Uploading...";
                 }
-                if (confirmPlaceOrderBtn) confirmPlaceOrderBtn.disabled = false;
-                showToast("Payment receipt loaded successfully! 🌾");
+
+                fetch("/api/orders/upload-receipt", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error("Receipt upload failed");
+                    return response.json();
+                })
+                .then(data => {
+                    uploadedReceiptUrl = data.receipt_image_url;
+                    showToast("Payment receipt uploaded successfully! 🌾");
+                    if (receiptFilenameDisplay) {
+                        receiptFilenameDisplay.innerText = `📄 Uploaded: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                        receiptFilenameDisplay.style.display = "block";
+                        receiptFilenameDisplay.style.color = "var(--success)";
+                    }
+                    if (receiptUploadTrigger) {
+                        receiptUploadTrigger.innerHTML = `<i data-lucide="check-circle" style="width: 15px; height: 15px;"></i> Change Receipt`;
+                        if (window.lucide) window.lucide.createIcons();
+                    }
+                })
+                .catch(err => {
+                    console.error("Receipt upload error:", err);
+                    showToast("Failed to upload receipt. Please retry!");
+                    uploadedReceiptUrl = null;
+                    if (receiptFilenameDisplay) {
+                        receiptFilenameDisplay.innerText = `❌ Upload Failed: ${file.name}`;
+                        receiptFilenameDisplay.style.display = "block";
+                        receiptFilenameDisplay.style.color = "var(--danger)";
+                    }
+                    if (receiptUploadTrigger) {
+                        receiptUploadTrigger.innerHTML = `<i data-lucide="upload" style="width: 15px; height: 15px;"></i> Choose Receipt Image`;
+                        if (window.lucide) window.lucide.createIcons();
+                    }
+                })
+                .finally(() => {
+                    if (confirmPlaceOrderBtn) {
+                        confirmPlaceOrderBtn.innerText = "Verify & Place Order";
+                    }
+                    updatePaymentMethodUI();
+                });
             } else {
+                uploadedReceiptUrl = null;
                 if (receiptFilenameDisplay) receiptFilenameDisplay.style.display = "none";
                 if (receiptUploadTrigger) {
                     receiptUploadTrigger.innerHTML = `<i data-lucide="upload" style="width: 15px; height: 15px;"></i> Choose Receipt Image`;
                     if (window.lucide) window.lucide.createIcons();
                 }
-                if (confirmPlaceOrderBtn && selectedPaymentMethod === "UPI") confirmPlaceOrderBtn.disabled = true;
+                updatePaymentMethodUI();
             }
         });
     }
@@ -949,7 +1291,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (selectedPaymentMethod === "UPI") {
-                if (!paymentReceiptInput || !paymentReceiptInput.files || paymentReceiptInput.files.length === 0) {
+                if (!uploadedReceiptUrl) {
                     showToast("Please upload the payment receipt to place order!");
                     return;
                 }
@@ -958,18 +1300,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const grandTotal = subtotal + calculatedDeliveryCharge;
 
-            // Trigger real-time shopkeeper approval prompt
-            const isApproved = confirm(`🔔 [NEW ORDER APPROVAL REQUEST]\n\nNew order received!\n\nCustomer: ${currentUser ? currentUser.fullname : 'Guest'}\nTotal Amount: ₹${grandTotal.toFixed(2)}\nDelivery Address: ${address}\nPayment Method: ${selectedPaymentMethod === "UPI" ? "Online UPI" : "Cash on Delivery"}\n\nClick OK to APPROVE and dispatch, or Cancel to REJECT.`);
-
-            if (!isApproved) {
-                showToast("Order rejected by store administrator. ❌");
-                return;
-            }
-
-            // Pre-open blank tab synchronously in user click flow to bypass browser popup blockers!
-            const whatsappWindow = window.open("", "_blank");
-
-            // Construct transactional payload
+            // Construct transactional payload with initial status Pending Approval
             const orderPayload = {
                 user_id: currentUser ? currentUser.id : null,
                 items_json: JSON.stringify(cart),
@@ -978,13 +1309,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 distance_km: calculatedDistance,
                 delivery_charge: calculatedDeliveryCharge,
                 payment_method: selectedPaymentMethod,
-                order_status: "Approved" // Status set to Approved upon clicking OK
+                order_status: "Pending Approval",
+                receipt_image_url: uploadedReceiptUrl
             };
 
             // Disable button during network round-trip
             confirmPlaceOrderBtnVal.disabled = true;
             const originalText = confirmPlaceOrderBtnVal.innerText;
-            confirmPlaceOrderBtnVal.innerText = "Verifying...";
+            confirmPlaceOrderBtnVal.innerText = "Placing Order...";
 
             // Send transactional order data to FastAPI server
             fetch("/api/orders/", {
@@ -1050,192 +1382,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Play successful checkout arpeggio chime!
                 playChime("order");
 
-                // SpeechSynthesis Voice Alert for awareness
-                try {
-                    if (window.speechSynthesis) {
-                        const message = new SpeechSynthesisUtterance();
-                        message.text = `Attention! New order number ${order.id} has been approved for dispatch!`;
-                        message.pitch = 1.0;
-                        message.rate = 0.95;
-                        window.speechSynthesis.speak(message);
-                    }
-                } catch (e) {
-                    console.error("Speech Synthesis failed:", e);
-                }
-
-                // Trigger dynamic premium PDF receipt download
-                try {
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF({
-                        orientation: "portrait",
-                        unit: "mm",
-                        format: "a4"
-                    });
-
-                    // 1. Branding Header
-                    doc.setFillColor(27, 67, 50); // Primary green theme
-                    doc.rect(0, 0, 210, 40, "F");
-                    
-                    doc.setTextColor(255, 255, 255);
-                    doc.setFont("Helvetica", "bold");
-                    doc.setFontSize(22);
-                    doc.text("MAA BANKESWARI RICE STORE", 15, 18);
-                    
-                    doc.setFont("Helvetica", "normal");
-                    doc.setFontSize(10);
-                    doc.setTextColor(212, 175, 55); // Accent Gold
-                    doc.text("Premium Aromatic Basmati, Daily Grains & Nutritious Pulses", 15, 25);
-                    
-                    doc.setFontSize(9);
-                    doc.setTextColor(255, 255, 255);
-                    doc.text("Indradhanu Market, IRC Village, Nayapalli, Bhubaneswar | Phone: +91 9078445116", 15, 32);
-
-                    // 2. Invoice Meta Info Block
-                    doc.setTextColor(30, 37, 34);
-                    doc.setFont("Helvetica", "bold");
-                    doc.setFontSize(14);
-                    doc.text("INVOICE RECEIPT", 15, 52);
-                    
-                    doc.setDrawColor(27, 67, 50);
-                    doc.setLineWidth(0.5);
-                    doc.line(15, 55, 195, 55);
-
-                    doc.setFont("Helvetica", "normal");
-                    doc.setFontSize(10);
-                    doc.text(`Order ID: #${order.id}`, 15, 63);
-                    doc.text(`Date & Time: ${order.created_at}`, 15, 69);
-                    doc.text(`Status: Approved (${order.payment_method === 'UPI' ? 'UPI Receipt Uploaded' : 'Cash on Delivery'})`, 15, 75);
-                    
-                    doc.setFont("Helvetica", "bold");
-                    doc.text("Delivery Details:", 115, 63);
-                    doc.setFont("Helvetica", "normal");
-                    
-                    // Clamped address wrap
-                    const addressLines = doc.splitTextToSize(order.delivery_address || "Standard Guest Pickup", 80);
-                    doc.text(addressLines, 115, 69);
-                    doc.text(`Distance: ${order.distance_km.toFixed(1)} km`, 115, 69 + (addressLines.length * 5));
-
-                    // 3. Grid Table Headers
-                    let startY = 95;
-                    doc.setFillColor(240, 245, 242);
-                    doc.rect(15, startY, 180, 8, "F");
-                    
-                    doc.setFont("Helvetica", "bold");
-                    doc.setFontSize(9.5);
-                    doc.text("Item Description", 18, startY + 5.5);
-                    doc.text("Rate", 110, startY + 5.5);
-                    doc.text("Qty", 145, startY + 5.5);
-                    doc.text("Total", 175, startY + 5.5);
-
-                    doc.setDrawColor(200, 210, 204);
-                    doc.line(15, startY + 8, 195, startY + 8);
-                    
-                    // 4. Populate Items Rows
-                    doc.setFont("Helvetica", "normal");
-                    let currentY = startY + 14;
-                    const items = JSON.parse(order.items_json);
-
-                    items.forEach((item, index) => {
-                        doc.text(`${index + 1}. ${item.name}`, 18, currentY);
-                        doc.text(`Rs. ${item.price.toFixed(2)} / ${item.unit}`, 110, currentY);
-                        doc.text(`${item.quantity} ${item.unit}`, 145, currentY);
-                        doc.text(`Rs. ${(item.price * item.quantity).toFixed(2)}`, 175, currentY);
-                        
-                        doc.line(15, currentY + 3, 195, currentY + 3);
-                        currentY += 10;
-                    });
-
-                    // 5. Calculations Summary Block
-                    currentY += 5;
-                    doc.setFont("Helvetica", "normal");
-                    doc.text("Items Subtotal:", 120, currentY);
-                    const subtotal = order.total_price - (order.delivery_charge || 0);
-                    doc.text(`Rs. ${subtotal.toFixed(2)}`, 175, currentY);
-
-                    if (order.delivery_charge) {
-                        currentY += 6;
-                        doc.text(`Delivery Charge (${order.distance_km.toFixed(1)} km):`, 120, currentY);
-                        doc.text(`Rs. ${order.delivery_charge.toFixed(2)}`, 175, currentY);
-                    }
-
-                    currentY += 8;
-                    doc.setDrawColor(27, 67, 50);
-                    doc.setLineWidth(0.5);
-                    doc.line(115, currentY - 4, 195, currentY - 4);
-                    
-                    doc.setFont("Helvetica", "bold");
-                    doc.setFontSize(11);
-                    doc.text("GRAND TOTAL:", 120, currentY);
-                    doc.text(`Rs. ${order.total_price.toFixed(2)}`, 175, currentY);
-                    
-                    // 6. Guarantee Stamp Footer
-                    currentY += 28;
-                    doc.setFillColor(247, 243, 232);
-                    doc.rect(15, currentY, 180, 20, "F");
-                    
-                    doc.setFont("Helvetica", "bolditalic");
-                    doc.setFontSize(10);
-                    doc.setTextColor(27, 67, 50);
-                    doc.text("✨ 100% Pure, Hygienic & Farm-Sourced Staple Grains Guarantee ✨", 32, currentY + 8);
-                    doc.setFont("Helvetica", "normal");
-                    doc.setFontSize(8.5);
-                    doc.setTextColor(100, 110, 105);
-                    doc.text("Thank you for shopping with us! For delivery inquiries, contact our store operator at +91 9078445116.", 28, currentY + 14);
-
-                    // 7. Save direct PDF
-                    doc.save(`maa_bankeswari_receipt_${order.id}.pdf`);
-                } catch (e) {
-                    console.error("PDF Invoice download failed:", e);
-                }
-
-                // Push native OS Desktop Notification
-                if (window.Notification && Notification.permission === "granted") {
-                    new Notification("🌾 Maa Bankeswari Store: Order Approved!", {
-                        body: `Order #${order.id} Approved! Total Bill: ₹${order.total_price.toFixed(2)}. Receipt PDF downloaded automatically.`,
-                        icon: "/static/favicon.png"
-                    });
-                }
-
-                // Compose WhatsApp click message dispatch to shopkeeper (9078445116)
-                try {
-                    const items = JSON.parse(order.items_json);
-                    let waText = `*🌾 NEW ORDER APPROVED - MAA BANKESWARI STORE 🌾*\n`;
-                    waText += `====================================\n`;
-                    waText += `*Order ID*   : #${order.id}\n`;
-                    waText += `*Date/Time*  : ${order.created_at}\n`;
-                    waText += `*Payment Method* : ${order.payment_method === 'UPI' ? 'Online UPI (Receipt Uploaded)' : 'Cash on Delivery'}\n`;
-                    if (order.delivery_address) {
-                        waText += `*Delivery Address* : ${order.delivery_address}\n`;
-                        waText += `*Distance*   : ${order.distance_km.toFixed(1)} km\n`;
-                    }
-                    waText += `====================================\n\n`;
-                    waText += `*Items Ordered*:\n`;
-
-                    items.forEach((item, index) => {
-                        waText += `${index + 1}. *${item.name}* - ${item.quantity} ${item.unit} x ₹${item.price.toFixed(2)} = ₹${(item.price * item.quantity).toFixed(2)}\n`;
-                    });
-
-                    const subtotal = order.total_price - (order.delivery_charge || 0);
-                    waText += `\n====================================\n`;
-                    waText += `*Subtotal*   : ₹${subtotal.toFixed(2)}\n`;
-                    if (order.delivery_charge) {
-                        waText += `*Delivery Charge* : ₹${order.delivery_charge.toFixed(2)}\n`;
-                    }
-                    waText += `*GRAND TOTAL* : *₹${order.total_price.toFixed(2)}*\n`;
-                    waText += `====================================\n\n`;
-                    waText += `🚀 _Receipt PDF downloaded automatically in user device. The order is APPROVED and ready for packing!_`;
-
-                    const waUrl = `https://api.whatsapp.com/send?phone=919078445116&text=${encodeURIComponent(waText)}`;
-                    if (whatsappWindow) {
-                        whatsappWindow.location.href = waUrl;
-                    } else {
-                        window.open(waUrl, "_blank");
-                    }
-                } catch (e) {
-                    console.error("WhatsApp composed dispatch failed:", e);
-                    if (whatsappWindow) whatsappWindow.close();
-                }
-
                 // Clear cart state now that it's stored on backend
                 cart = [];
                 syncAllUI();
@@ -1254,7 +1400,6 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(error => {
                 console.error("Maa Bankeswari Rice Store: Checkout error:", error);
                 showToast("Could not process order. Please try again!");
-                if (whatsappWindow) whatsappWindow.close();
             })
             .finally(() => {
                 // Restore button states

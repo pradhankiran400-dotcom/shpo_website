@@ -48,6 +48,12 @@ MIGRATIONS = [
         "sql":   "ALTER TABLE orders ADD COLUMN order_status TEXT DEFAULT 'Pending Approval'",
         "label": "orders.order_status"
     },
+    # Add receipt_image_url to orders
+    {
+        "check": "SELECT COUNT(*) FROM pragma_table_info('orders') WHERE name='receipt_image_url'",
+        "sql":   "ALTER TABLE orders ADD COLUMN receipt_image_url TEXT",
+        "label": "orders.receipt_image_url"
+    },
 ]
 
 def run_migrations():

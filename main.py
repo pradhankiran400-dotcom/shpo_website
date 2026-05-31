@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request,Depends,HTTPException
+from fastapi import FastAPI, Request,Depends,HTTPException, File, UploadFile
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
@@ -11,6 +11,8 @@ from database import engine,SessionLocal
 import models
 from datetime import datetime
 import hashlib
+import os
+import shutil
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -62,7 +64,8 @@ def sync_orders_to_file(db: Session):
                 "distance_km": order.distance_km,
                 "delivery_charge": order.delivery_charge,
                 "payment_method": order.payment_method,
-                "order_status": order.order_status
+                "order_status": order.order_status,
+                "receipt_image_url": order.receipt_image_url
             })
         with open("orders.json", "w", encoding="utf-8") as f:
             json.dump(orders_list, f, indent=4, ensure_ascii=False)
@@ -107,6 +110,45 @@ app.mount("/media", StaticFiles(directory="media"), name="media")
 
 # Setup template engine
 templates = Jinja2Templates(directory="templates")
+
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    title = f"Oops! Error {exc.status_code}"
+    message = exc.detail
+    
+    if exc.status_code == 404:
+        title = "Grain Variety Not Found!"
+        message = "The requested kitchen counter or grain variety could not be found. Let's get you back to the main catalog!"
+    elif exc.status_code == 500:
+        title = "Internal Harvest Error!"
+        message = "An unexpected error occurred in our systems. Please reload or go back to browse our catalog!"
+        
+    return templates.TemplateResponse(
+        request=request,
+        name="error.html",
+        context={
+            "status_code": exc.status_code,
+            "error_title": title,
+            "error_message": message
+        },
+        status_code=exc.status_code
+    )
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    print(f"[UNHANDLED EXCEPTION]: {str(exc)}")
+    return templates.TemplateResponse(
+        request=request,
+        name="error.html",
+        context={
+            "status_code": 500,
+            "error_title": "Internal Harvest Error!",
+            "error_message": "An unexpected error occurred in our systems. Please reload or go back to browse our catalog!"
+        },
+        status_code=500
+    )
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -169,7 +211,8 @@ def create_new_order(order_data: OrderCreate, db: Session = Depends(get_db)):
         distance_km=order_data.distance_km,
         delivery_charge=order_data.delivery_charge,
         payment_method=order_data.payment_method,
-        order_status=order_data.order_status
+        order_status=order_data.order_status,
+        receipt_image_url=order_data.receipt_image_url
     )
     db.add(new_order)
     db.commit()
@@ -182,6 +225,8 @@ def create_new_order(order_data: OrderCreate, db: Session = Depends(get_db)):
     print(f"\n[NEW ORDER RECEIVED] (ID: {new_order.id}) at {timestamp}")
     print(f"Payment Method: {new_order.payment_method}")
     print(f"Order Status: {new_order.order_status}")
+    if new_order.receipt_image_url:
+        print(f"Receipt Image URL: {new_order.receipt_image_url}")
     print(f"Total Amount: Rs. {new_order.total_price:.2f}")
     if new_order.delivery_address:
         print(f"Delivery Address: {new_order.delivery_address}")
@@ -246,6 +291,61 @@ def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
 def get_user_orders(user_id: int, db: Session = Depends(get_db)):
     result = db.execute(select(models.Order).where(models.Order.user_id == user_id))
     return result.scalars().all()
+
+
+class StatusUpdate(BaseModel):
+    order_status: str
+
+
+@app.put("/api/orders/{order_id}/status", response_model=OrderResponse)
+def update_order_status(order_id: int, status_data: StatusUpdate, db: Session = Depends(get_db)):
+    result = db.execute(select(models.Order).where(models.Order.id == order_id))
+    order = result.scalars().first()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found!")
+        
+    order.order_status = status_data.order_status
+    db.commit()
+    db.refresh(order)
+    
+    # Sync to JSON
+    sync_orders_to_file(db)
+    
+    print(f"[ORDER STATUS UPDATED] (ID: {order.id}) to {order.order_status}")
+    return order
+
+
+@app.post("/api/orders/upload-receipt")
+def upload_receipt(file: UploadFile = File(...)):
+    # Verify file is an image
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image files are allowed!")
+    
+    # Save file in static/uploads/receipts/
+    upload_dir = "static/uploads/receipts"
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    # Clean/unique filename to prevent collision
+    filename = f"{int(datetime.now().timestamp())}_{file.filename.replace(' ', '_')}"
+    file_path = os.path.join(upload_dir, filename)
+    
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
+        
+    return {"receipt_image_url": f"/static/uploads/receipts/{filename}"}
+
+
+@app.get("/admin", response_class=HTMLResponse)
+def get_admin_dashboard(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="admin.html",
+        context={"shop_name": "Maa Bankeswari Rice Store - Admin Dashboard"}
+    )
 
 
 

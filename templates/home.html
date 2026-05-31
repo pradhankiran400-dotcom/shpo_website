@@ -15,6 +15,9 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- jsPDF library for premium client-side invoices -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Leaflet Interactive Maps CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Custom Style -->
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="icon" type="image/png" href="/static/favicon.png">
@@ -340,9 +343,8 @@
             <div class="success-checkmark-wrapper pulse-glow">
                 <i data-lucide="check" class="success-checkmark-svg"></i>
             </div>
-            <h3 class="thank-you-title">Thank You for Your Order!</h3>
-            <p>Thank you for shopping with <strong>Maa Bankeswari Rice Store</strong>. We are preparing your order of
-                premium grains. Our team will contact you shortly for delivery confirmation.</p>
+            <h3 class="thank-you-title">Order Received & Pending Review!</h3>
+            <p>Thank you for shopping with <strong>Maa Bankeswari Rice Store</strong>. Your premium grains order has been submitted and is currently <strong>Pending Review</strong> by the shopkeeper. You will receive a WhatsApp update once the store operator approves and dispatches your order!</p>
             <div class="order-summary-box">
                 <div class="summary-header">Order Summary</div>
                 <div id="modal-order-items"></div>
@@ -381,11 +383,16 @@
             <!-- Address and Distance Panel (Step 1) -->
             <div id="address-step-panel">
                 <h3 style="font-family: var(--font-heading); color: var(--primary-dark); font-size: 1.5rem; margin-bottom: 8px; text-align: center;">Delivery Details</h3>
-                <p style="color: var(--text-medium); font-size: 0.85rem; text-align: center; margin-bottom: 20px;">Please provide your delivery address to compute exact real-time distance and delivery fees direct from our store.</p>
+                <p style="color: var(--text-medium); font-size: 0.85rem; text-align: center; margin-bottom: 16px;">Choose your delivery address by pinning your location on the map below, or type details manually.</p>
                 
-                <div class="form-group" style="margin-bottom: 16px;">
-                    <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 6px;">Delivery Address</label>
-                    <textarea id="delivery-address-input" placeholder="e.g. Plot No. 124, Sahid Nagar, Bhubaneswar, Odisha" required style="width: 100%; padding: 12px 14px; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-sm); outline: none; font-family: var(--font-body); font-size: 0.9rem; min-height: 80px; resize: vertical; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);"></textarea>
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 6px;">
+                        📍 Pin Your Delivery Location (Click map or drag marker)
+                    </label>
+                    <div id="checkout-map" style="width: 100%; height: 210px; border-radius: var(--radius-sm); margin-bottom: 12px; border: 1.5px solid rgba(27,67,50,0.12); box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); position: relative; z-index: 1;"></div>
+                    
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 6px;">Delivery Address Details</label>
+                    <textarea id="delivery-address-input" placeholder="Loading address from map pin... or type detailed house/flat number here" required style="width: 100%; padding: 12px 14px; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-sm); outline: none; font-family: var(--font-body); font-size: 0.9rem; min-height: 70px; resize: vertical; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);"></textarea>
                 </div>
                 
                 <div style="display: flex; gap: 12px; margin-bottom: 20px;">

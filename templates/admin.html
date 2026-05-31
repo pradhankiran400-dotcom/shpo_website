@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maa Bankeswari Rice Store - Admin Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- jsPDF library for receipt downloads -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2d6a4f;
+            --primary-dark: #1b4332;
+            --primary-light: #40916c;
+            --primary-ultra-light: #ebf5ee;
+            --accent: #d4af37;
+            --success: #2e7d32;
+            --danger: #c62828;
+            --warning: #ef6c00;
+            --text-dark: #1a201c;
+            --text-medium: #4a554f;
+            --text-light: #7a8a80;
+            --bg-base: #f4f7f5;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 30px;
+            --shadow-sm: 0 2px 8px rgba(27,67,50,0.06);
+            --shadow-md: 0 8px 24px rgba(27,67,50,0.08);
+            --shadow-lg: 0 16px 40px rgba(27,67,50,0.12);
+            --font-heading: 'Playfair Display', serif;
+            --font-body: 'Outfit', sans-serif;
+            --transition-fast: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            --transition-normal: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-base);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: radial-gradient(circle at 10% 20%, rgba(45, 106, 79, 0.03) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(212, 175, 55, 0.03) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        header {
+            background: rgba(27, 67, 50, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            color: white;
+            padding: 16px 32px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: white;
+        }
+
+        .brand-icon {
+            font-size: 2.2rem;
+        }
+
+        .brand-text h1 {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .brand-text span {
+            font-size: 0.75rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            display: block;
+            margin-top: -2px;
+        }
+
+        .status-badge-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 6px 14px;
+            border-radius: var(--radius-xl);
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #4caf50;
+            border-radius: 50%;
+            animation: pulse-green 1.5s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(76, 175, 80, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+
+        main {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 32px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .dashboard-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .summary-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(27,67,50,0.06);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .summary-info h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-info strong {
+            font-size: 1.8rem;
+            color: var(--primary-dark);
+            font-weight: 800;
+        }
+
+        .summary-icon {
+            width: 48px;
+            height: 48px;
+            background-color: var(--primary-ultra-light);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .orders-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(27,67,50,0.05);
+            padding-bottom: 10px;
+        }
+
+        .orders-section-header h2 {
+            font-family: var(--font-heading);
+            color: var(--primary-dark);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .refresh-btn {
+            background: white;
+            border: 1.5px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: var(--radius-xl);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition-fast);
+        }
+
+        .refresh-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 20px;
+        }
+
+        .order-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(27, 67, 50, 0.08);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition-normal);
+        }
+
+        .order-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: rgba(27,67,50,0.15);
+        }
+
+        .order-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px dashed rgba(27,67,50,0.08);
+            padding-bottom: 12px;
+        }
+
+        .order-meta h4 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .order-meta span {
+            font-size: 0.78rem;
+            color: var(--text-light);
+            display: block;
+            margin-top: 2px;
+        }
+
+        .badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: var(--radius-xl);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-pending {
+            background-color: #fff3e0;
+            color: var(--warning);
+            border: 1px solid rgba(239, 108, 0, 0.15);
+        }
+
+        .badge-approved {
+            background-color: var(--primary-ultra-light);
+            color: var(--success);
+            border: 1px solid rgba(46, 125, 50, 0.15);
+        }
+
+        .badge-rejected {
+            background-color: #ffebee;
+            color: var(--danger);
+            border: 1px solid rgba(198, 40, 40, 0.15);
+        }
+
+        .order-address-box {
+            font-size: 0.85rem;
+            color: var(--text-medium);
+            background: rgba(27,67,50,0.02);
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--primary-light);
+        }
+
+        .order-address-box strong {
+            color: var(--primary-dark);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .order-items-box {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .order-item-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.82rem;
+            color: var(--text-medium);
+        }
+
+        .order-item-row strong {
+            color: var(--primary);
+        }
+
+        .order-receipt-proof {
+            border: 1px solid rgba(27,67,50,0.1);
+            border-radius: var(--radius-sm);
+            padding: 8px;
+            background: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+
+        .order-receipt-proof:hover {
+            border-color: var(--primary);
+            background-color: var(--primary-ultra-light);
+        }
+
+        .receipt-thumbnail {
+            width: 44px;
+            height: 44px;
+            object-fit: cover;
+            border-radius: 4px;
+            background-color: #eee;
+        }
+
+        .receipt-info {
+            flex: 1;
+        }
+
+        .receipt-info h5 {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .receipt-info span {
+            font-size: 0.72rem;
+            color: var(--text-light);
+            display: block;
+        }
+
+        .order-totals {
+            border-top: 1px solid rgba(27,67,50,0.06);
+            padding-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-totals .grand-total {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+        }
+
+        .order-totals .payment-desc {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            background-color: #f1f3f4;
+            padding: 2px 8px;
+            border-radius: var(--radius-xl);
+            font-weight: 600;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .btn {
+            flex: 1;
+            height: 38px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: var(--transition-fast);
+        }
+
+        .btn-approve {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-approve:hover {
+            background-color: #1b5e20;
+            box-shadow: 0 4px 12px rgba(46,125,50,0.25);
+        }
+
+        .btn-reject {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-reject:hover {
+            background-color: #b71c1c;
+            box-shadow: 0 4px 12px rgba(198,40,40,0.25);
+        }
+
+        .empty-orders {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(27,67,50,0.06);
+        }
+
+        .empty-orders span {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .empty-orders h4 {
+            font-family: var(--font-heading);
+            color: var(--primary-dark);
+            font-size: 1.2rem;
+            margin-bottom: 6px;
+        }
+
+        .empty-orders p {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        /* Lightbox Modal */
+        .lightbox-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(27, 67, 50, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .lightbox-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .lightbox-content {
+            background: white;
+            padding: 16px;
+            border-radius: var(--radius-md);
+            max-width: 90vw;
+            max-height: 85vh;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .lightbox-modal.active .lightbox-content {
+            transform: scale(1);
+        }
+
+        .lightbox-close-btn {
+            position: absolute;
+            top: -16px;
+            right: -16px;
+            width: 32px;
+            height: 32px;
+            background-color: var(--primary-dark);
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .lightbox-image {
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        .lightbox-footer {
+            font-size: 0.82rem;
+            color: var(--text-medium);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* Toast notifications */
+        .toast-notification {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(40px);
+            background: rgba(27, 67, 50, 0.95);
+            backdrop-filter: blur(8px);
+            color: white;
+            padding: 12px 24px;
+            border-radius: var(--radius-xl);
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-lg);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .toast-notification.active {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .spin {
+            animation: spin-anim 1.5s linear infinite;
+        }
+
+        @keyframes spin-anim {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Admin Security Lock Screen Overlay -->
+    <div id="admin-lock-screen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(27, 67, 50, 0.55); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); z-index: 99999; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease, transform 0.4s ease;">
+        <div style="background: rgba(255, 255, 255, 0.95); border: 1.5px solid rgba(27, 67, 50, 0.15); padding: 40px; border-radius: var(--radius-lg); max-width: 400px; width: 90%; text-align: center; box-shadow: var(--shadow-lg); backdrop-filter: blur(10px);">
+            <div style="font-size: 3.5rem; margin-bottom: 16px;">🔐</div>
+            <h2 style="font-family: var(--font-heading); color: var(--primary-dark); font-size: 1.8rem; margin-bottom: 8px;">Restricted Access</h2>
+            <p style="color: var(--text-medium); font-size: 0.9rem; margin-bottom: 24px; line-height: 1.4;">This portal is reserved for Maa Bankeswari Store Operators. Please enter the security key to authenticate.</p>
+            
+            <div style="position: relative; margin-bottom: 20px;">
+                <input type="password" id="admin-password-input" placeholder="Enter Security Key" style="width: 100%; padding: 12px 40px 12px 14px; border: 1.5px solid rgba(27,67,50,0.15); border-radius: var(--radius-sm); outline: none; font-family: var(--font-body); font-size: 0.95rem; text-align: center; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02); height: 44px;">
+                <button type="button" id="toggle-admin-password" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-light); cursor: pointer; display: flex; align-items: center;">
+                    <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+            
+            <button id="submit-admin-password" style="width: 100%; height: 44px; background-color: var(--primary); color: white; border: none; border-radius: var(--radius-sm); font-weight: 700; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 12px rgba(45,106,79,0.2); transition: var(--transition-fast); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i data-lucide="shield-check" style="width: 18px; height: 18px;"></i> Authenticate
+            </button>
+            
+            <div id="lock-error-msg" style="color: var(--danger); font-size: 0.85rem; font-weight: 600; margin-top: 12px; display: none;">
+                ⚠️ Invalid Security Key! Please check and retry.
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <a href="/admin" class="brand">
+                <span class="brand-icon">🌾</span>
+                <div class="brand-text">
+                    <h1>Maa Bankeswari</h1>
+                    <span>Admin Dashboard</span>
+                </div>
+            </a>
+            
+            <div class="status-badge-container">
+                <div class="status-dot"></div>
+                <span>Server Online & Listening</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main>
+        
+        <!-- Summary stats -->
+        <section class="dashboard-summary">
+            <div class="summary-card">
+                <div class="summary-info">
+                    <h3>Pending Orders</h3>
+                    <strong id="stat-pending">0</strong>
+                </div>
+                <div class="summary-icon"><i data-lucide="clock"></i></div>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-info">
+                    <h3>Approved Orders</h3>
+                    <strong id="stat-approved">0</strong>
+                </div>
+                <div class="summary-icon" style="background-color: rgba(46,125,50,0.1); color: var(--success);"><i data-lucide="check-circle-2"></i></div>
+            </div>
+            
+            <div class="summary-card">
+                <div class="summary-info">
+                    <h3>Total Sales</h3>
+                    <strong id="stat-sales">₹0.00</strong>
+                </div>
+                <div class="summary-icon" style="background-color: rgba(212,175,55,0.1); color: var(--accent);"><i data-lucide="indian-rupee"></i></div>
+            </div>
+        </section>
+
+        <!-- Pending Section -->
+        <section>
+            <div class="orders-section-header">
+                <h2>Pending Approvals</h2>
+                <button class="refresh-btn" id="refresh-orders-btn">
+                    <i data-lucide="refresh-cw" id="refresh-icon"></i> Refresh List
+                </button>
+            </div>
+            
+            <div class="orders-grid" id="pending-orders-grid">
+                <!-- Dynamically populated -->
+                <div class="empty-orders">
+                    <i class="spin" data-lucide="loader-2" style="width: 32px; height: 32px; margin: 0 auto 10px auto; color: var(--primary);"></i>
+                    <p>Loading order data...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- History Section -->
+        <section style="margin-top: 16px;">
+            <div class="orders-section-header">
+                <h2>Recent Order History</h2>
+            </div>
+            
+            <div class="orders-grid" id="history-orders-grid">
+                <!-- Dynamically populated -->
+                <div class="empty-orders">
+                    <span>🌾</span>
+                    <h4>No history recorded yet</h4>
+                    <p>Processed orders will appear in this section.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Receipt Lightbox Modal -->
+    <div class="lightbox-modal" id="receipt-lightbox">
+        <div class="lightbox-content">
+            <button class="lightbox-close-btn" id="lightbox-close"><i data-lucide="x"></i></button>
+            <img src="" alt="Full Receipt Proof" class="lightbox-image" id="lightbox-img">
+            <div class="lightbox-footer" id="lightbox-filename">Receipt Preview</div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-notification" id="toast-notify">
+        <i data-lucide="info" class="toast-icon" id="toast-icon"></i>
+        <span class="toast-message" id="toast-message">Notification details</span>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // ----------------------------------------------------
+            // ADMIN SECURITY LOCK SCREEN
+            // ----------------------------------------------------
+            const lockScreen = document.getElementById("admin-lock-screen");
+            const pwdInput = document.getElementById("admin-password-input");
+            const submitBtn = document.getElementById("submit-admin-password");
+            const toggleBtn = document.getElementById("toggle-admin-password");
+            const errorMsg = document.getElementById("lock-error-msg");
+
+            if (sessionStorage.getItem("admin_authenticated") === "true") {
+                if (lockScreen) {
+                    lockScreen.style.display = "none";
+                }
+            } else {
+                if (lockScreen) {
+                    lockScreen.style.display = "flex";
+                }
+            }
+
+            if (toggleBtn && pwdInput) {
+                toggleBtn.addEventListener("click", () => {
+                    if (pwdInput.type === "password") {
+                        pwdInput.type = "text";
+                        toggleBtn.innerHTML = `<i data-lucide="eye-off" style="width: 18px; height: 18px;"></i>`;
+                    } else {
+                        pwdInput.type = "password";
+                        toggleBtn.innerHTML = `<i data-lucide="eye" style="width: 18px; height: 18px;"></i>`;
+                    }
+                    if (window.lucide) window.lucide.createIcons();
+                });
+            }
+
+            function handleAuthSubmit() {
+                const enteredVal = pwdInput ? pwdInput.value : "";
+                const securityKey = "MaaBankeswari@2026"; // Secure shopkeeper password
+                
+                if (enteredVal === securityKey) {
+                    sessionStorage.setItem("admin_authenticated", "true");
+                    if (lockScreen) {
+                        lockScreen.style.opacity = "0";
+                        setTimeout(() => {
+                            lockScreen.style.display = "none";
+                        }, 400);
+                    }
+                    showToast("Authentication successful! Welcome operator. 🌾");
+                } else {
+                    if (errorMsg) errorMsg.style.display = "block";
+                    if (pwdInput) pwdInput.value = "";
+                    playChime("reject");
+                }
+            }
+
+            if (submitBtn) {
+                submitBtn.addEventListener("click", handleAuthSubmit);
+            }
+
+            if (pwdInput) {
+                pwdInput.addEventListener("keypress", (e) => {
+                    if (e.key === "Enter") handleAuthSubmit();
+                });
+            }
+
+            let allOrders = [];
+            let knownPendingIds = null;
+
+            // Request desktop OS notification permissions on admin load
+            if (window.Notification && Notification.permission === "default") {
+                Notification.requestPermission();
+            }
+            
+            // Elements
+            const pendingGrid = document.getElementById("pending-orders-grid");
+            const historyGrid = document.getElementById("history-orders-grid");
+            const refreshBtn = document.getElementById("refresh-orders-btn");
+            const refreshIcon = document.getElementById("refresh-icon");
+            const lightbox = document.getElementById("receipt-lightbox");
+            const lightboxImg = document.getElementById("lightbox-img");
+            const lightboxClose = document.getElementById("lightbox-close");
+            const lightboxFilename = document.getElementById("lightbox-filename");
+            
+            // Stat Elements
+            const statPending = document.getElementById("stat-pending");
+            const statApproved = document.getElementById("stat-approved");
+            const statSales = document.getElementById("stat-sales");
+
+            // Web Audio Chime system
+            function playChime(type) {
+                try {
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContextClass) return;
+                    const audioCtx = new AudioContextClass();
+                    
+                    if (type === "approve") {
+                        // High-fidelity arpeggio major chord
+                        const playChordNote = (freq, startTime, duration) => {
+                            const osc = audioCtx.createOscillator();
+                            const gain = audioCtx.createGain();
+                            osc.type = "triangle";
+                            osc.frequency.setValueAtTime(freq, startTime);
+                            gain.gain.setValueAtTime(0.12, startTime);
+                            gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                            osc.connect(gain);
+                            gain.connect(audioCtx.destination);
+                            osc.start(startTime);
+                            osc.stop(startTime + duration);
+                        };
+                        const now = audioCtx.currentTime;
+                        playChordNote(523.25, now, 0.4);        // C5
+                        playChordNote(659.25, now + 0.06, 0.4); // E5
+                        playChordNote(783.99, now + 0.12, 0.4); // G5
+                        playChordNote(1046.50, now + 0.18, 0.5); // C6
+                    } else if (type === "reject") {
+                        // Lower sad tone for reject
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = "sawtooth";
+                        osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+                        osc.frequency.linearRampToValueAtTime(147, audioCtx.currentTime + 0.35); // D3
+                        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 0.35);
+                    } else if (type === "new_order") {
+                        // Rapid high-pitched alarm chime to get the shopkeeper's attention
+                        const playBeep = (freq, startTime, duration) => {
+                            const osc = audioCtx.createOscillator();
+                            const gain = audioCtx.createGain();
+                            osc.type = "sine";
+                            osc.frequency.setValueAtTime(freq, startTime);
+                            gain.gain.setValueAtTime(0.1, startTime);
+                            gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                            osc.connect(gain);
+                            gain.connect(audioCtx.destination);
+                            osc.start(startTime);
+                            osc.stop(startTime + duration);
+                        };
+                        const now = audioCtx.currentTime;
+                        playBeep(880.00, now, 0.15); // A5 note
+                        playBeep(880.00, now + 0.18, 0.15);
+                        playBeep(1174.66, now + 0.36, 0.3); // D6 note
+                    }
+                } catch (e) {
+                    console.error("Audio Synthesis failed:", e);
+                }
+            }
+
+            // Toast system
+            let toastTimeout;
+            function showToast(message, isSuccess = true) {
+                const toast = document.getElementById("toast-notify");
+                const toastMsg = document.getElementById("toast-message");
+                const toastIcon = document.getElementById("toast-icon");
+
+                if (toast && toastMsg) {
+                    toastMsg.innerText = message;
+                    toast.classList.add("active");
+                    
+                    if (toastIcon) {
+                        toastIcon.setAttribute("data-lucide", isSuccess ? "check-circle" : "alert-triangle");
+                        if (window.lucide) window.lucide.createIcons();
+                    }
+
+                    clearTimeout(toastTimeout);
+                    toastTimeout = setTimeout(() => {
+                        toast.classList.remove("active");
+                    }, 3000);
+                }
+            }
+
+            // Fetch orders
+            function fetchOrders() {
+                if (refreshIcon) refreshIcon.classList.add("spin");
+                
+                fetch("/api/orders/")
+                .then(res => {
+                    if (!res.ok) throw new Error("Failed to load orders");
+                    return res.json();
+                })
+                .then(orders => {
+                    allOrders = orders;
+                    renderDashboard();
+                })
+                .catch(err => {
+                    console.error("Error fetching orders:", err);
+                    showToast("Could not retrieve order list!", false);
+                })
+                .finally(() => {
+                    if (refreshIcon) {
+                        setTimeout(() => {
+                            refreshIcon.classList.remove("spin");
+                        }, 500);
+                    }
+                });
+            }
+
+            // Render dashboard elements
+            function renderDashboard() {
+                const pendingOrders = allOrders.filter(o => o.order_status === "Pending Approval");
+                const approvedOrders = allOrders.filter(o => o.order_status === "Approved");
+                const otherOrders = allOrders.filter(o => o.order_status !== "Pending Approval");
+
+                // Track new pending orders for real-time awareness alerts
+                if (knownPendingIds === null) {
+                    knownPendingIds = new Set(pendingOrders.map(o => o.id));
+                } else {
+                    pendingOrders.forEach(order => {
+                        if (!knownPendingIds.has(order.id)) {
+                            knownPendingIds.add(order.id);
+                            
+                            // Trigger immediate awareness alerts!
+                            playChime("new_order");
+                            
+                            // 1. Desktop Notification
+                            if (window.Notification && Notification.permission === "granted") {
+                                new Notification("🌾 New Pending Order Received!", {
+                                    body: `Order #${order.id} is waiting for review. Amount: ₹${order.total_price.toFixed(2)}.`,
+                                    icon: "/static/favicon.png"
+                                });
+                            }
+                            
+                            // 2. Speech Synthesis Voice Alarm
+                            try {
+                                if (window.speechSynthesis) {
+                                    const msg = new SpeechSynthesisUtterance();
+                                    msg.text = `Attention! A new order number ${order.id} has been received and is waiting for your review!`;
+                                    msg.pitch = 1.05;
+                                    msg.rate = 0.9;
+                                    window.speechSynthesis.speak(msg);
+                                }
+                            } catch (e) {
+                                console.error("Speech Synthesis failed:", e);
+                            }
+                        }
+                    });
+                }
+
+                // Update Stats
+                if (statPending) statPending.innerText = pendingOrders.length;
+                if (statApproved) statApproved.innerText = approvedOrders.length;
+                
+                const totalSales = approvedOrders.reduce((sum, o) => sum + o.total_price, 0);
+                if (statSales) statSales.innerText = `₹${totalSales.toFixed(2)}`;
+
+                // 1. Render Pendings
+                if (pendingOrders.length === 0) {
+                    pendingGrid.innerHTML = `
+                        <div class="empty-orders">
+                            <span>🌾</span>
+                            <h4>All clear! No pending orders.</h4>
+                            <p>Sit back and relax! Any new premium rice orders will appear here for verification instantly.</p>
+                        </div>
+                    `;
+                } else {
+                    pendingGrid.innerHTML = "";
+                    pendingOrders.sort((a,b) => b.id - a.id).forEach(order => {
+                        let items = [];
+                        try {
+                            items = order.items_json ? (typeof order.items_json === 'string' ? JSON.parse(order.items_json) : order.items_json) : [];
+                        } catch (e) {
+                            console.error("Error parsing items_json for order:", order.id, e);
+                        }
+                        const itemsHTML = items.map(item => `
+                            <div class="order-item-row">
+                                <span>${item.name} <strong>x${item.quantity}</strong></span>
+                                <span>₹${(item.price * item.quantity).toFixed(2)}</span>
+                            </div>
+                        `).join("");
+
+                        let receiptHTML = "";
+                        if (order.payment_method === "UPI" && order.receipt_image_url) {
+                            receiptHTML = `
+                                <div class="order-receipt-proof" data-url="${order.receipt_image_url}">
+                                    <img src="${order.receipt_image_url}" class="receipt-thumbnail" alt="UPI Receipt">
+                                    <div class="receipt-info">
+                                        <h5>Uploaded UPI Receipt</h5>
+                                        <span>Click to view full-screen image</span>
+                                    </div>
+                                    <i data-lucide="eye" style="width: 16px; height: 16px; color: var(--primary);"></i>
+                                </div>
+                            `;
+                        }
+
+                        const card = `
+                            <div class="order-card" id="order-${order.id}">
+                                <div class="order-card-header">
+                                    <div class="order-meta">
+                                        <h4>Order #${order.id}</h4>
+                                        <span>Time: ${order.created_at}</span>
+                                    </div>
+                                    <span class="badge badge-pending">Pending Approval</span>
+                                </div>
+                                <div class="order-address-box">
+                                    <strong>📍 Delivery Destination</strong>
+                                    ${order.delivery_address || 'Store Pickup'}
+                                    <span style="display:block; font-size:0.75rem; color:var(--text-light); margin-top:4px;">
+                                        Distance: ${(order.distance_km || 0).toFixed(1)} km | Fee: ₹${(order.delivery_charge || 0).toFixed(2)}
+                                    </span>
+                                </div>
+                                <div class="order-items-box">
+                                    ${itemsHTML}
+                                </div>
+                                ${receiptHTML}
+                                <div class="order-totals">
+                                    <span class="payment-desc">${order.payment_method === 'UPI' ? '📱 UPI ONLINE' : '💵 CASH ON DELIVERY'}</span>
+                                    <span class="grand-total">₹${order.total_price.toFixed(2)}</span>
+                                </div>
+                                <div class="order-actions">
+                                    <button class="btn btn-reject reject-btn" data-id="${order.id}">
+                                        <i data-lucide="x-circle"></i> Reject
+                                    </button>
+                                    <button class="btn btn-approve approve-btn" data-id="${order.id}">
+                                        <i data-lucide="check-square"></i> Approve & Dispatch
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        pendingGrid.insertAdjacentHTML("beforeend", card);
+                    });
+                }
+
+                // 2. Render History
+                if (otherOrders.length === 0) {
+                    historyGrid.innerHTML = `
+                        <div class="empty-orders">
+                            <span>🌾</span>
+                            <h4>No history recorded yet</h4>
+                            <p>Processed orders will appear in this section.</p>
+                        </div>
+                    `;
+                } else {
+                    historyGrid.innerHTML = "";
+                    otherOrders.sort((a,b) => b.id - a.id).slice(0, 12).forEach(order => {
+                        let items = [];
+                        try {
+                            items = order.items_json ? (typeof order.items_json === 'string' ? JSON.parse(order.items_json) : order.items_json) : [];
+                        } catch (e) {
+                            console.error("Error parsing items_json for history order:", order.id, e);
+                        }
+                        const itemsHTML = items.map(item => `
+                            <div class="order-item-row" style="font-size: 0.78rem;">
+                                <span>${item.name} <strong>x${item.quantity}</strong></span>
+                                <span>₹${(item.price * item.quantity).toFixed(2)}</span>
+                            </div>
+                        `).join("");
+
+                        const badgeClass = order.order_status === "Approved" ? "badge-approved" : "badge-rejected";
+                        const statusLabel = order.order_status || "Approved";
+
+                        const card = `
+                            <div class="order-card" style="opacity: 0.8;">
+                                <div class="order-card-header">
+                                    <div class="order-meta">
+                                        <h4>Order #${order.id}</h4>
+                                        <span style="font-size:0.7rem;">Time: ${order.created_at}</span>
+                                    </div>
+                                    <span class="badge ${badgeClass}">${statusLabel}</span>
+                                </div>
+                                <div class="order-items-box">
+                                    ${itemsHTML}
+                                </div>
+                                <div class="order-totals" style="margin-top: 4px; padding-top: 8px;">
+                                    <span class="payment-desc" style="font-size:0.7rem;">${order.payment_method}</span>
+                                    <span class="grand-total" style="font-size: 1rem;">₹${order.total_price.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        `;
+                        historyGrid.insertAdjacentHTML("beforeend", card);
+                    });
+                }
+
+                // Re-render Lucide icons
+                if (window.lucide) window.lucide.createIcons();
+                bindInteractions();
+            }
+
+            // Click event delegation & binds
+            function bindInteractions() {
+                // Receipt Lightbox
+                const receiptDivs = document.querySelectorAll(".order-receipt-proof");
+                receiptDivs.forEach(div => {
+                    div.onclick = () => {
+                        const url = div.getAttribute("data-url");
+                        if (lightbox && lightboxImg && url) {
+                            lightboxImg.src = url;
+                            lightboxFilename.innerText = `Full Receipt URL: ${url}`;
+                            lightbox.classList.add("active");
+                        }
+                    };
+                });
+
+                // Approve buttons
+                const approveBtns = document.querySelectorAll(".approve-btn");
+                approveBtns.forEach(btn => {
+                    btn.onclick = () => {
+                        const orderId = parseInt(btn.getAttribute("data-id"));
+                        processStatusUpdate(orderId, "Approved");
+                    };
+                });
+
+                // Reject buttons
+                const rejectBtns = document.querySelectorAll(".reject-btn");
+                rejectBtns.forEach(btn => {
+                    btn.onclick = () => {
+                        const orderId = parseInt(btn.getAttribute("data-id"));
+                        const confirmReject = confirm(`Are you sure you want to REJECT Order #${orderId}?`);
+                        if (confirmReject) {
+                            processStatusUpdate(orderId, "Rejected");
+                        }
+                    };
+                });
+            }
+
+            // Process order state updates
+            function processStatusUpdate(orderId, status) {
+                fetch(`/api/orders/${orderId}/status`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ order_status: status })
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error("Failed to update status");
+                    return res.json();
+                })
+                .then(order => {
+                    playChime(status === "Approved" ? "approve" : "reject");
+                    showToast(`Order #${orderId} successfully ${status}! 🌾`);
+                    
+                    if (status === "Approved") {
+                        // 1. Speak voice alert aloud
+                        try {
+                            if (window.speechSynthesis) {
+                                const msg = new SpeechSynthesisUtterance();
+                                msg.text = `Order number ${order.id} has been approved for dispatch!`;
+                                msg.pitch = 1.0;
+                                msg.rate = 0.95;
+                                window.speechSynthesis.speak(msg);
+                            }
+                        } catch (e) {
+                            console.error("Speech Synthesis failed:", e);
+                        }
+
+                        // 2. Generate and download Invoice PDF
+                        try {
+                            generateInvoicePDF(order);
+                        } catch (e) {
+                            console.error("Invoice PDF generation failed:", e);
+                        }
+
+                        // 3. Compose WhatsApp summary to 9078445116
+                        try {
+                            dispatchWhatsApp(order);
+                        } catch (e) {
+                            console.error("WhatsApp dispatch failed:", e);
+                        }
+                    }
+
+                    // Reload
+                    fetchOrders();
+                })
+                .catch(err => {
+                    console.error("Status update error:", err);
+                    showToast("Could not update order status!", false);
+                });
+            }
+
+            // PDF receipt builder on Admin side
+            function generateInvoicePDF(order) {
+                if (!window.jspdf) {
+                    console.error("jsPDF library not loaded");
+                    showToast("PDF library not loaded! Unable to download invoice.", false);
+                    return;
+                }
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    orientation: "portrait",
+                    unit: "mm",
+                    format: "a4"
+                });
+
+                // 1. Branding Header
+                doc.setFillColor(27, 67, 50); // Primary green theme
+                doc.rect(0, 0, 210, 40, "F");
+                
+                doc.setTextColor(255, 255, 255);
+                doc.setFont("Helvetica", "bold");
+                doc.setFontSize(22);
+                doc.text("MAA BANKESWARI RICE STORE", 15, 18);
+                
+                doc.setFont("Helvetica", "normal");
+                doc.setFontSize(10);
+                doc.setTextColor(212, 175, 55); // Accent Gold
+                doc.text("Premium Aromatic Basmati, Daily Grains & Nutritious Pulses", 15, 25);
+                
+                doc.setFontSize(9);
+                doc.setTextColor(255, 255, 255);
+                doc.text("Indradhanu Market, IRC Village, Nayapalli, Bhubaneswar | Phone: +91 9078445116", 15, 32);
+
+                // 2. Invoice Meta Info Block
+                doc.setTextColor(30, 37, 34);
+                doc.setFont("Helvetica", "bold");
+                doc.setFontSize(14);
+                doc.text("INVOICE RECEIPT", 15, 52);
+                
+                doc.setDrawColor(27, 67, 50);
+                doc.setLineWidth(0.5);
+                doc.line(15, 55, 195, 55);
+
+                doc.setFont("Helvetica", "normal");
+                doc.setFontSize(10);
+                doc.text(`Order ID: #${order.id}`, 15, 63);
+                doc.text(`Date & Time: ${order.created_at}`, 15, 69);
+                doc.text(`Status: Approved (${order.payment_method === 'UPI' ? 'UPI Receipt Uploaded' : 'Cash on Delivery'})`, 15, 75);
+                
+                doc.setFont("Helvetica", "bold");
+                doc.text("Delivery Details:", 115, 63);
+                doc.setFont("Helvetica", "normal");
+                
+                // Clamped address wrap
+                const addressLines = doc.splitTextToSize(order.delivery_address || "Standard Guest Pickup", 80);
+                doc.text(addressLines, 115, 69);
+                doc.text(`Distance: ${(order.distance_km || 0).toFixed(1)} km`, 115, 69 + (addressLines.length * 5));
+
+                // 3. Grid Table Headers
+                let startY = 95;
+                doc.setFillColor(240, 245, 242);
+                doc.rect(15, startY, 180, 8, "F");
+                
+                doc.setFont("Helvetica", "bold");
+                doc.setFontSize(9.5);
+                doc.text("Item Description", 18, startY + 5.5);
+                doc.text("Rate", 110, startY + 5.5);
+                doc.text("Qty", 145, startY + 5.5);
+                doc.text("Total", 175, startY + 5.5);
+
+                doc.setDrawColor(200, 210, 204);
+                doc.line(15, startY + 8, 195, startY + 8);
+                
+                // 4. Populate Items Rows
+                doc.setFont("Helvetica", "normal");
+                let currentY = startY + 14;
+                let items = [];
+                try {
+                    items = order.items_json ? (typeof order.items_json === 'string' ? JSON.parse(order.items_json) : order.items_json) : [];
+                } catch (e) {
+                    console.error("Error parsing items_json for PDF:", e);
+                }
+
+                items.forEach((item, index) => {
+                    doc.text(`${index + 1}. ${item.name}`, 18, currentY);
+                    doc.text(`Rs. ${item.price.toFixed(2)} / ${item.unit}`, 110, currentY);
+                    doc.text(`${item.quantity} ${item.unit}`, 145, currentY);
+                    doc.text(`Rs. ${(item.price * item.quantity).toFixed(2)}`, 175, currentY);
+                    
+                    doc.line(15, currentY + 3, 195, currentY + 3);
+                    currentY += 10;
+                });
+
+                // 5. Calculations Summary Block
+                currentY += 5;
+                doc.setFont("Helvetica", "normal");
+                doc.text("Items Subtotal:", 120, currentY);
+                const subtotal = order.total_price - (order.delivery_charge || 0);
+                doc.text(`Rs. ${subtotal.toFixed(2)}`, 175, currentY);
+
+                if (order.delivery_charge) {
+                    currentY += 6;
+                    doc.text(`Delivery Charge (${order.distance_km.toFixed(1)} km):`, 120, currentY);
+                    doc.text(`Rs. ${order.delivery_charge.toFixed(2)}`, 175, currentY);
+                }
+
+                currentY += 8;
+                doc.setDrawColor(27, 67, 50);
+                doc.setLineWidth(0.5);
+                doc.line(115, currentY - 4, 195, currentY - 4);
+                
+                doc.setFont("Helvetica", "bold");
+                doc.setFontSize(11);
+                doc.text("GRAND TOTAL:", 120, currentY);
+                doc.text(`Rs. ${order.total_price.toFixed(2)}`, 175, currentY);
+                
+                // 6. Guarantee Stamp Footer
+                currentY += 28;
+                doc.setFillColor(247, 243, 232);
+                doc.rect(15, currentY, 180, 20, "F");
+                
+                doc.setFont("Helvetica", "bolditalic");
+                doc.setFontSize(10);
+                doc.setTextColor(27, 67, 50);
+                doc.text("✨ 100% Pure, Hygienic & Farm-Sourced Staple Grains Guarantee ✨", 32, currentY + 8);
+                doc.setFont("Helvetica", "normal");
+                doc.setFontSize(8.5);
+                doc.setTextColor(100, 110, 105);
+                doc.text("Thank you for shopping with us! For delivery inquiries, contact our store operator at +91 9078445116.", 28, currentY + 14);
+
+                // 7. Save direct PDF
+                doc.save(`maa_bankeswari_receipt_${order.id}.pdf`);
+            }
+
+            // WhatsApp Click compose
+            function dispatchWhatsApp(order) {
+                let items = [];
+                try {
+                    items = order.items_json ? (typeof order.items_json === 'string' ? JSON.parse(order.items_json) : order.items_json) : [];
+                } catch (e) {
+                    console.error("Error parsing items_json for WhatsApp:", e);
+                }
+                let waText = `*🌾 NEW ORDER APPROVED - MAA BANKESWARI STORE 🌾*\n`;
+                waText += `====================================\n`;
+                waText += `*Order ID*   : #${order.id}\n`;
+                waText += `*Date/Time*  : ${order.created_at}\n`;
+                waText += `*Payment Method* : ${order.payment_method === 'UPI' ? 'Online UPI (Receipt Uploaded)' : 'Cash on Delivery'}\n`;
+                if (order.delivery_address) {
+                    waText += `*Delivery Address* : ${order.delivery_address}\n`;
+                    waText += `*Distance*   : ${(order.distance_km || 0).toFixed(1)} km\n`;
+                }
+                waText += `====================================\n\n`;
+                waText += `*Items Ordered*:\n`;
+
+                items.forEach((item, index) => {
+                    waText += `${index + 1}. *${item.name}* - ${item.quantity} ${item.unit} x ₹${item.price.toFixed(2)} = ₹${(item.price * item.quantity).toFixed(2)}\n`;
+                });
+
+                const subtotal = order.total_price - (order.delivery_charge || 0);
+                waText += `\n====================================\n`;
+                waText += `*Subtotal*   : ₹${subtotal.toFixed(2)}\n`;
+                if (order.delivery_charge) {
+                    waText += `*Delivery Charge* : ₹${order.delivery_charge.toFixed(2)}\n`;
+                }
+                waText += `*GRAND TOTAL* : *₹${order.total_price.toFixed(2)}*\n`;
+                waText += `====================================\n\n`;
+                waText += `🚀 _Receipt PDF downloaded automatically in user device. The order is APPROVED and ready for packing!_`;
+
+                const waUrl = `https://api.whatsapp.com/send?phone=919078445116&text=${encodeURIComponent(waText)}`;
+                window.open(waUrl, "_blank");
+            }
+
+            // Close lightbox click
+            if (lightboxClose) {
+                lightboxClose.onclick = () => lightbox.classList.remove("active");
+            }
+            if (lightbox) {
+                lightbox.onclick = (e) => {
+                    if (e.target === lightbox) lightbox.classList.remove("active");
+                };
+            }
+
+            // Refresh actions
+            if (refreshBtn) {
+                refreshBtn.onclick = () => fetchOrders();
+            }
+
+            // Initial fetch & poll every 10 seconds to auto-refresh pending queue!
+            fetchOrders();
+            setInterval(fetchOrders, 10000);
+        });
+    </script>
+</body>
+</html>

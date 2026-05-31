@@ -31,7 +31,7 @@ class Product(Base):
             if self.image_url.startswith(("http://", "https://", "/", "static/", "media/")):
                 return self.image_url
             return f"/media/profile_pics/{self.image_url}"
-        return "media\profile_pics\premium_toor_dal.png"
+        return "media/profile_pics/premium_toor_dal.png"
 
 
 class Order(Base):
@@ -47,3 +47,4 @@ class Order(Base):
     delivery_charge = Column(Float, nullable=True)
     payment_method = Column(String, default="COD")
     order_status = Column(String, default="Pending Approval")
+    receipt_image_url = Column(String, nullable=True)

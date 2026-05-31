@@ -58,5 +58,17 @@
         "username": "kiran_8501",
         "email": "kiran_8501@example.com",
         "fullname": "Kiran Pradhan"
+    },
+    {
+        "id": 11,
+        "username": "kiran_9142",
+        "email": "kiran_9142@example.com",
+        "fullname": "Kiran Pradhan"
+    },
+    {
+        "id": 12,
+        "username": "rahul",
+        "email": "rahul343@gmail.com",
+        "fullname": "Rahul Sahu"
     }
 ]

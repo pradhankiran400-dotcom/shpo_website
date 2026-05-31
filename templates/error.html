@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ error_title | default("Something Went Wrong") }} - Maa Bankeswari Store</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            --primary: #2d6a4f;
+            --primary-dark: #1b4332;
+            --primary-light: #40916c;
+            --primary-ultra-light: #ebf5ee;
+            --accent: #d4af37;
+            --danger: #c62828;
+            --text-dark: #1a201c;
+            --text-medium: #4a554f;
+            --text-light: #7a8a80;
+            --bg-base: #f4f7f5;
+            --radius-md: 16px;
+            --radius-xl: 30px;
+            --shadow-lg: 0 16px 48px rgba(27,67,50,0.12);
+            --font-heading: 'Playfair Display', serif;
+            --font-body: 'Outfit', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-base);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Ambient Harvest Background Gradients */
+        .ambient-glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background-image: radial-gradient(circle at 20% 30%, rgba(45, 106, 79, 0.04) 0%, transparent 40%),
+                              radial-gradient(circle at 80% 70%, rgba(212, 175, 55, 0.04) 0%, transparent 40%);
+        }
+
+        /* Interactive Falling Grains Canvas */
+        #rice-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Glassmorphic Error Container */
+        .error-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1.5px solid rgba(27, 67, 50, 0.12);
+            padding: 48px 40px;
+            border-radius: var(--radius-md);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            z-index: 10;
+            position: relative;
+            transform: translateY(20px);
+            opacity: 0;
+            animation: slide-up-fade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slide-up-fade {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .error-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: #ffebee;
+            color: var(--danger);
+            border: 1px solid rgba(198, 40, 40, 0.15);
+            padding: 6px 14px;
+            border-radius: var(--radius-xl);
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .error-title {
+            font-family: var(--font-heading);
+            color: var(--primary-dark);
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            line-height: 1.25;
+        }
+
+        .error-msg {
+            color: var(--text-medium);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        /* Decorative Splashes */
+        .brand-logo {
+            font-size: 2.8rem;
+            margin-bottom: 16px;
+            display: inline-block;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(5deg); }
+        }
+
+        /* Premium Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 46px;
+            padding: 0 28px;
+            border-radius: var(--radius-xl);
+            font-weight: 700;
+            font-size: 0.92rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 14px rgba(45, 106, 79, 0.25);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(45, 106, 79, 0.35);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--primary);
+            color: var(--primary);
+            margin-left: 12px;
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-ultra-light);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-glow"></div>
+    <canvas id="rice-canvas"></canvas>
+
+    <!-- Glassmorphic Card -->
+    <div class="error-card">
+        <span class="brand-logo">🌾</span>
+        <br>
+        <div class="error-badge">
+            <i data-lucide="alert-circle" style="width: 14px; height: 14px;"></i>
+            <span>Error {{ status_code | default("500") }}</span>
+        </div>
+        
+        <h1 class="error-title">{{ error_title | default("Oops! Path Missing") }}</h1>
+        <p class="error-msg">{{ error_message | default("The requested kitchen counter or grain variety could not be found. Let's get you back to the main catalog!") }}</p>
+        
+        <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <a href="/" class="btn btn-primary">
+                <i data-lucide="shopping-basket" style="width: 18px; height: 18px;"></i> View Rice Catalog
+            </a>
+            <button onclick="window.history.back();" class="btn btn-outline">
+                <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i> Go Back
+            </button>
+        </div>
+    </div>
+
+    <!-- 60FPS High-Fidelity Canvas Physics Animation -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            if (window.lucide) window.lucide.createIcons();
+
+            const canvas = document.getElementById("rice-canvas");
+            const ctx = canvas.getContext("2d");
+
+            // Set size
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resizeCanvas();
+            window.addEventListener("resize", resizeCanvas);
+
+            // Grain physics blueprint
+            class RiceGrain {
+                constructor() {
+                    this.reset();
+                    // Distribute across screen height on first load
+                    this.y = Math.random() * canvas.height;
+                }
+
+                reset() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = -20;
+                    this.size = Math.random() * 6 + 4; // Length of Basmati grain
+                    this.aspectRatio = 0.25; // Long and slender Basmati
+                    this.speedY = Math.random() * 1.5 + 0.8;
+                    this.speedX = Math.random() * 0.6 - 0.3; // Drifting wind
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.spin = Math.random() * 0.02 - 0.01;
+
+                    // Curated colors: pure white, light gold, soft amber
+                    const colorSchemes = [
+                        "rgba(255, 255, 255, 0.85)",  // Classic Basmati
+                        "rgba(244, 240, 224, 0.85)",  // Raw unpolished grain
+                        "rgba(212, 175, 55, 0.55)",   // Golden amber grain
+                        "rgba(255, 250, 240, 0.90)"   // Milky white grain
+                    ];
+                    this.color = colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
+                }
+
+                update() {
+                    this.y += this.speedY;
+                    this.x += this.speedX;
+                    this.angle += this.spin;
+
+                    // Reset if fallen off screen
+                    if (this.y > canvas.height + 20 || this.x < -20 || this.x > canvas.width + 20) {
+                        this.reset();
+                    }
+                }
+
+                draw() {
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.angle);
+
+                    ctx.beginPath();
+                    // Draw beautiful elongated slender Basmati grain
+                    ctx.ellipse(0, 0, this.size, this.size * this.aspectRatio, 0, 0, Math.PI * 2);
+                    
+                    ctx.fillStyle = this.color;
+                    // Soft glow shadow for premium feel
+                    ctx.shadowColor = "rgba(27,67,50,0.06)";
+                    ctx.shadowBlur = 3;
+                    ctx.fill();
+
+                    ctx.restore();
+                }
+            }
+
+            // Populate harvest container (approx 80-100 grains for smooth drift)
+            const grains = [];
+            const maxGrains = Math.min(100, Math.floor(window.innerWidth / 12));
+            for (let i = 0; i < maxGrains; i++) {
+                grains.push(new RiceGrain());
+            }
+
+            // Animation Loop
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                grains.forEach(grain => {
+                    grain.update();
+                    grain.draw();
+                });
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+        });
+    </script>
+</body>
+</html>
