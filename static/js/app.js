@@ -966,6 +966,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
+            // Pre-open blank tab synchronously in user click flow to bypass browser popup blockers!
+            const whatsappWindow = window.open("", "_blank");
+
             // Construct transactional payload
             const orderPayload = {
                 user_id: currentUser ? currentUser.id : null,
@@ -1223,9 +1226,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     waText += `🚀 _Receipt PDF downloaded automatically in user device. The order is APPROVED and ready for packing!_`;
 
                     const waUrl = `https://api.whatsapp.com/send?phone=919078445116&text=${encodeURIComponent(waText)}`;
-                    window.open(waUrl, "_blank");
+                    if (whatsappWindow) {
+                        whatsappWindow.location.href = waUrl;
+                    } else {
+                        window.open(waUrl, "_blank");
+                    }
                 } catch (e) {
                     console.error("WhatsApp composed dispatch failed:", e);
+                    if (whatsappWindow) whatsappWindow.close();
                 }
 
                 // Clear cart state now that it's stored on backend
@@ -1246,6 +1254,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(error => {
                 console.error("Maa Bankeswari Rice Store: Checkout error:", error);
                 showToast("Could not process order. Please try again!");
+                if (whatsappWindow) whatsappWindow.close();
             })
             .finally(() => {
                 // Restore button states
