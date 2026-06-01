@@ -107,8 +107,58 @@ def sync_products_to_file(db: Session):
 @app.on_event("startup")
 def startup_event():
     with SessionLocal() as db:
-        sync_products_to_file(db)
-        sync_users_to_file(db)
+        # Check if products table is empty
+        product_exists = db.execute(select(models.Product)).scalars().first()
+        if not product_exists:
+            print("Database is empty! Seeding products from products.json...")
+            if os.path.exists("products.json"):
+                try:
+                    with open("products.json", "r", encoding="utf-8") as f:
+                        products_data = json.load(f)
+                        for p in products_data:
+                            new_prod = models.Product(
+                                name=p.get("name"),
+                                category=p.get("category"),
+                                description=p.get("description"),
+                                price=p.get("price"),
+                                unit=p.get("unit", "kg"),
+                                image_url=p.get("image_path"),
+                                in_stock=p.get("in_stock", True),
+                                badge=p.get("badge")
+                            )
+                            db.add(new_prod)
+                        db.commit()
+                        print(f"Successfully seeded {len(products_data)} products to database!")
+                except Exception as e:
+                    print(f"Error seeding database: {e}")
+        else:
+            # Sync products to file only if database has products
+            sync_products_to_file(db)
+            
+        # Also seed default users if users table is empty
+        user_exists = db.execute(select(models.User)).scalars().first()
+        if not user_exists:
+            print("Users table is empty! Seeding users from users.json...")
+            if os.path.exists("users.json"):
+                try:
+                    with open("users.json", "r", encoding="utf-8") as f:
+                        users_data = json.load(f)
+                        for u in users_data:
+                            new_usr = models.User(
+                                username=u.get("username"),
+                                email=u.get("email"),
+                                hashed_password=hash_password("MaaBankeswari@2026"), # Set a secure default passcode
+                                fullname=u.get("fullname"),
+                                phone_number=u.get("phone_number", "")
+                            )
+                            db.add(new_usr)
+                        db.commit()
+                        print(f"Successfully seeded {len(users_data)} users!")
+                except Exception as e:
+                    print(f"Error seeding users: {e}")
+        else:
+            sync_users_to_file(db)
+            
         sync_orders_to_file(db)
 
 
