@@ -50,3 +50,4 @@ class Order(Base):
     order_status = Column(String, default="Pending Approval")
     receipt_image_url = Column(String, nullable=True)
     phone_number = Column(String, default="")
+    ai_forensics_json = Column(String, nullable=True)

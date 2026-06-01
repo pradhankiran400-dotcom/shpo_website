@@ -20,7 +20,8 @@
         "payment_method": "COD",
         "order_status": "Rejected",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 2,
@@ -43,7 +44,8 @@
         "payment_method": "COD",
         "order_status": "Rejected",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 3,
@@ -72,7 +74,8 @@
         "payment_method": "COD",
         "order_status": "Rejected",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 4,
@@ -101,7 +104,8 @@
         "payment_method": "COD",
         "order_status": "Rejected",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 5,
@@ -130,7 +134,8 @@
         "payment_method": "COD",
         "order_status": "Rejected",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 6,
@@ -159,7 +164,8 @@
         "payment_method": "COD",
         "order_status": "Rejected",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 7,
@@ -182,7 +188,8 @@
         "payment_method": "COD",
         "order_status": "Rejected",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 8,
@@ -211,7 +218,8 @@
         "payment_method": "COD",
         "order_status": "Rejected",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 9,
@@ -234,7 +242,8 @@
         "payment_method": "COD",
         "order_status": "Rejected",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 10,
@@ -263,7 +272,8 @@
         "payment_method": "COD",
         "order_status": "Rejected",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 11,
@@ -286,7 +296,8 @@
         "payment_method": "COD",
         "order_status": "Rejected",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 12,
@@ -315,7 +326,8 @@
         "payment_method": "UPI",
         "order_status": "Approved",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 13,
@@ -338,7 +350,8 @@
         "payment_method": "COD",
         "order_status": "Approved",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 14,
@@ -367,7 +380,8 @@
         "payment_method": "UPI",
         "order_status": "Approved",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 15,
@@ -389,7 +403,8 @@
         "payment_method": "UPI",
         "order_status": "Approved",
         "receipt_image_url": "/static/uploads/receipts/test_receipt.png",
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 16,
@@ -420,7 +435,8 @@
         "payment_method": "COD",
         "order_status": "Approved",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 17,
@@ -442,7 +458,8 @@
         "payment_method": "UPI",
         "order_status": "Approved",
         "receipt_image_url": "/static/uploads/receipts/test_receipt.png",
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 18,
@@ -464,7 +481,8 @@
         "payment_method": "UPI",
         "order_status": "Approved",
         "receipt_image_url": "/static/uploads/receipts/test_receipt.png",
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 19,
@@ -486,7 +504,8 @@
         "payment_method": "UPI",
         "order_status": "Approved",
         "receipt_image_url": "/static/uploads/receipts/test_receipt.png",
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 20,
@@ -509,7 +528,8 @@
         "payment_method": "COD",
         "order_status": "Rejected",
         "receipt_image_url": null,
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 21,
@@ -532,7 +552,8 @@
         "payment_method": "UPI",
         "order_status": "Rejected",
         "receipt_image_url": "/static/uploads/receipts/1780245669_Screenshot_2026-05-31_221100.png",
-        "phone_number": ""
+        "phone_number": "",
+        "ai_forensics_json": null
     },
     {
         "id": 22,
@@ -555,7 +576,8 @@
         "payment_method": "UPI",
         "order_status": "Approved",
         "receipt_image_url": "/static/uploads/receipts/1780246286_Screenshot_2026-05-31_221100.png",
-        "phone_number": "9078445116"
+        "phone_number": "9078445116",
+        "ai_forensics_json": null
     },
     {
         "id": 23,
@@ -577,7 +599,8 @@
         "payment_method": "UPI",
         "order_status": "Approved",
         "receipt_image_url": "/static/uploads/receipts/1780246286_Screenshot_2026-05-31_221100.png",
-        "phone_number": "9078445116"
+        "phone_number": "9078445116",
+        "ai_forensics_json": null
     },
     {
         "id": 24,
@@ -600,6 +623,127 @@
         "payment_method": "UPI",
         "order_status": "Rejected",
         "receipt_image_url": "/static/uploads/receipts/1780247518_Screenshot_2026-05-31_221100.png",
-        "phone_number": "9078445116"
+        "phone_number": "9078445116",
+        "ai_forensics_json": null
+    },
+    {
+        "id": 25,
+        "user_id": 13,
+        "items": [
+            {
+                "id": 2,
+                "name": "Organic Moog Dal",
+                "price": 100,
+                "image": "/media/profile_pics/organic_moong_dal.png",
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 103.7,
+        "created_at": "2026-05-31 23:40:43",
+        "delivery_address": "Regional Institute of Education, Sachivalaya Marg, ୟୁନିଟ-୯, Ward 29, South East Zone, Bhubaneswar Municipal Corporation, Bhubaneswar (M.Corp.), Khordha, Odisha, 751022, India",
+        "distance_km": 1.85,
+        "delivery_charge": 3.7,
+        "payment_method": "UPI",
+        "order_status": "Rejected",
+        "receipt_image_url": "/static/uploads/receipts/1780251032_Gemini_Generated_Image_90nieh90nieh90ni.png",
+        "phone_number": "9078445116",
+        "ai_forensics_json": null
+    },
+    {
+        "id": 26,
+        "user_id": 13,
+        "items": [
+            {
+                "id": 2,
+                "name": "Organic Moog Dal",
+                "price": 100,
+                "image": "/media/profile_pics/organic_moong_dal.png",
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 103.7,
+        "created_at": "2026-06-01 09:26:51",
+        "delivery_address": "Ward 29, South East Zone, Bhubaneswar Municipal Corporation, Bhubaneswar (M.Corp.), Khordha, Odisha, 751022, India",
+        "distance_km": 1.85,
+        "delivery_charge": 3.7,
+        "payment_method": "UPI",
+        "order_status": "Rejected",
+        "receipt_image_url": "/static/uploads/receipts/1780286192_Gemini_Generated_Image_90nieh90nieh90ni.png",
+        "phone_number": "9078445116",
+        "ai_forensics_json": "{\"is_authentic\": true, \"confidence_score\": 1.0, \"payment_app\": \"Local OCR Verified\", \"detected_amount\": 103.7, \"detected_utr\": \"Unknown UTR\", \"detected_timestamp\": \"2026-06-01 09:26:51\", \"receiver_upi_id\": \"N/A\", \"tampering_indicators\": [], \"forensic_analysis_details\": \"Verified via standard local OCR. Configure Gemini API key for visual forensics scanner.\"}"
+    },
+    {
+        "id": 27,
+        "user_id": 13,
+        "items": [
+            {
+                "id": 2,
+                "name": "Organic Moog Dal",
+                "price": 100,
+                "image": "/media/profile_pics/organic_moong_dal.png",
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 103.7,
+        "created_at": "2026-06-01 09:30:48",
+        "delivery_address": "Ward 29, South East Zone, Bhubaneswar Municipal Corporation, Bhubaneswar (M.Corp.), Khordha, Odisha, 751022, India",
+        "distance_km": 1.85,
+        "delivery_charge": 3.7,
+        "payment_method": "UPI",
+        "order_status": "Approved",
+        "receipt_image_url": "/static/uploads/receipts/1780286440_Gemini_Generated_Image_90nieh90nieh90ni.png",
+        "phone_number": "9078445116",
+        "ai_forensics_json": "{\"is_authentic\": true, \"confidence_score\": 1.0, \"payment_app\": \"Local OCR Verified\", \"detected_amount\": 103.7, \"detected_utr\": \"Unknown UTR\", \"detected_timestamp\": \"2026-06-01 09:30:48\", \"receiver_upi_id\": \"N/A\", \"tampering_indicators\": [], \"forensic_analysis_details\": \"Verified via standard local OCR. Configure Gemini API key for visual forensics scanner.\"}"
+    },
+    {
+        "id": 28,
+        "user_id": 9,
+        "items": [
+            {
+                "id": 8,
+                "name": "Premium Whole Masoor Dal",
+                "price": 98,
+                "image": "/media/profile_pics/premium_toor_dal.png",
+                "unit": "kg",
+                "quantity": 1
+            },
+            {
+                "id": 4,
+                "name": "Superfine Daily Rice",
+                "price": 52,
+                "image": "/media/profile_pics/sona_masoori_rice.png",
+                "unit": "kg",
+                "quantity": 1
+            },
+            {
+                "id": 1,
+                "name": "Dawat Rice",
+                "price": 95,
+                "image": "/media/profile_pics/dawat.png",
+                "unit": "kg",
+                "quantity": 1
+            },
+            {
+                "id": 2,
+                "name": "Organic Moog Dal",
+                "price": 100,
+                "image": "/media/profile_pics/organic_moong_dal.png",
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 347.44,
+        "created_at": "2026-06-01 10:44:39",
+        "delivery_address": "Regional Institute of Education, Sachivalaya Marg, Unit-9, Ward 29, South East Zone, Bhubaneswar Municipal Corporation, Bhubaneswar (M.Corp.), Khordha, Odisha, 751022, India",
+        "distance_km": 1.22,
+        "delivery_charge": 2.44,
+        "payment_method": "COD",
+        "order_status": "Approved",
+        "receipt_image_url": null,
+        "phone_number": "",
+        "ai_forensics_json": null
     }
 ]

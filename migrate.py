@@ -66,6 +66,12 @@ MIGRATIONS = [
         "sql":   "ALTER TABLE orders ADD COLUMN phone_number TEXT DEFAULT ''",
         "label": "orders.phone_number"
     },
+    # Add ai_forensics_json to orders
+    {
+        "check": "SELECT COUNT(*) FROM pragma_table_info('orders') WHERE name='ai_forensics_json'",
+        "sql":   "ALTER TABLE orders ADD COLUMN ai_forensics_json TEXT",
+        "label": "orders.ai_forensics_json"
+    },
 ]
 
 def run_migrations():

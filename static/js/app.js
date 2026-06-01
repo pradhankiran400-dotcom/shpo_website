@@ -1147,6 +1147,55 @@ document.addEventListener("DOMContentLoaded", () => {
             if (codInfoPanel) codInfoPanel.style.display = "none";
             if (upiInfoPanel) upiInfoPanel.style.display = "block";
             
+            // Load store settings dynamically to construct payee UPI ID
+            fetch("/api/settings")
+            .then(res => {
+                if (!res.ok) throw new Error("Could not fetch store settings");
+                return res.json();
+            })
+            .then(data => {
+                const storeUpi = data.store_upi_id || "9078445116@ybl";
+                const transactionRef = `MB${Date.now()}`;
+                const upiLink = `upi://pay?pa=${storeUpi}&pn=MaaBankeswariStore&mc=5411&tr=${transactionRef}&am=${grandTotal.toFixed(2)}&cu=INR&tn=MaaBankeswariOrder`;
+                
+                // Get QR Code image element directly by ID
+                const qrImage = document.getElementById("checkout-qr-image");
+                if (qrImage) {
+                    qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiLink)}`;
+                }
+                
+                // Add a dynamic click to pay button for mobile phone users
+                let payButton = document.getElementById("pay-via-app-btn");
+                if (!payButton && upiInfoPanel) {
+                    payButton = document.createElement("a");
+                    payButton.id = "pay-via-app-btn";
+                    payButton.className = "btn btn-primary";
+                    payButton.style.display = "inline-flex";
+                    payButton.style.alignItems = "center";
+                    payButton.style.justifyContent = "center";
+                    payButton.style.gap = "6px";
+                    payButton.style.width = "100%";
+                    payButton.style.height = "38px";
+                    payButton.style.marginTop = "12px";
+                    payButton.style.fontSize = "0.85rem";
+                    payButton.style.fontWeight = "700";
+                    payButton.style.textDecoration = "none";
+                    
+                    const qrWrapper = upiInfoPanel.querySelector(".qr-code-wrapper");
+                    if (qrWrapper) {
+                        qrWrapper.appendChild(payButton);
+                    }
+                }
+                
+                if (payButton) {
+                    payButton.href = upiLink;
+                    payButton.innerHTML = `📱 Tap to Pay ₹${grandTotal.toFixed(2)} in UPI App`;
+                }
+            })
+            .catch(err => {
+                console.error("Error setting dynamic UPI QR code:", err);
+            });
+            
             // For UPI, verify if a receipt image is uploaded
             if (uploadedReceiptUrl) {
                 if (confirmPlaceOrderBtn) confirmPlaceOrderBtn.disabled = false;

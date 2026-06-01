@@ -28,5 +28,55 @@
         "image_path": "/media/profile_pics/premium_toor_dal.png",
         "in_stock": true,
         "badge": "High Protein"
+    },
+    {
+        "name": "Superfine Daily Rice",
+        "category": "rice",
+        "description": "Premium superfine grains, non-sticky and lightweight. Perfect for your everyday home-cooked meals.",
+        "price": 52.0,
+        "unit": "kg",
+        "image_path": "/media/profile_pics/sona_masoori_rice.png",
+        "in_stock": true,
+        "badge": "Daily Essential"
+    },
+    {
+        "name": "Royal Long Grain Basmati Rice",
+        "category": "rice",
+        "description": "Extra-long slender grains with rich aroma. Universally aged to perfection, ideal for special biryanis and pulao.",
+        "price": 145.0,
+        "unit": "kg",
+        "image_path": "/media/profile_pics/royal_basmati_rice.png",
+        "in_stock": true,
+        "badge": "Premium Quality"
+    },
+    {
+        "name": "Organic Moong Dal",
+        "category": "dal",
+        "description": "100% organic, unpolished, and high-protein yellow moong dal. Sourced naturally and highly easy to digest.",
+        "price": 110.0,
+        "unit": "kg",
+        "image_path": "/media/profile_pics/organic_moong_dal.png",
+        "in_stock": true,
+        "badge": "Best Seller"
+    },
+    {
+        "name": "Premium Toor Dal",
+        "category": "dal",
+        "description": "Traditional unpolished Arhar Dal processed with care. High nutritious value and rich traditional taste.",
+        "price": 165.0,
+        "unit": "kg",
+        "image_path": "/media/profile_pics/premium_toor_dal.png",
+        "in_stock": true,
+        "badge": "High Protein"
+    },
+    {
+        "name": "Premium Whole Masoor Dal",
+        "category": "dal",
+        "description": "Finest grade red masoor lentils, rich in iron and dietary fiber. Fast cooking and delicious flavor.",
+        "price": 98.0,
+        "unit": "kg",
+        "image_path": "/media/profile_pics/premium_toor_dal.png",
+        "in_stock": false,
+        "badge": "Out of Stock"
     }
 ]

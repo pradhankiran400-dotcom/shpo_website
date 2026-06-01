@@ -58,6 +58,7 @@ class OrderCreate(BaseModel):
     order_status: Optional[str] = "Pending Approval"
     receipt_image_url: Optional[str] = None
     phone_number: Optional[str] = ""
+    ai_forensics_json: Optional[str] = None
 
 class OrderResponse(OrderCreate):
     id: int

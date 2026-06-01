@@ -34,6 +34,7 @@
 
     --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     --transition-fast: all 0.2s ease;
+    --white: #ffffff;
 }
 
 /* Reset and Global Styles */
@@ -1721,4 +1722,204 @@ body {
 #chatbot-messages-log::-webkit-scrollbar-thumb {
     background-color: rgba(27, 67, 50, 0.15);
     border-radius: 4px;
+}
+
+/* ==========================================
+   DARK THEME VARIABLES & OVERRIDES
+   ========================================== */
+html.dark-theme {
+    --primary: #52b788;              /* Brighter vibrant green for dark backdrop */
+    --primary-light: #74c69d;
+    --primary-ultra-light: #1b4332;  /* Dark forest green for cards/badges background */
+    --primary-dark: #ebf5ee;         /* Soft high-contrast off-white */
+
+    --accent: #ffd700;               /* Brighter Gold */
+    --accent-dark: #d4af37;
+    --accent-light: #2d312e;         /* Dark container with gold text */
+
+    --bg-base: #121614;              /* Very deep charcoal-sage background */
+    --bg-card: #1c221e;              /* Card background */
+    --border-color: rgba(212, 175, 55, 0.15); /* Gold outline border for elegance */
+
+    --text-dark: #f1f5f2;            /* Primary white text */
+    --text-medium: #c2d1c9;          /* Medium light gray-green text */
+    --text-light: #8da397;           /* Muted text */
+
+    --success: #4caf50;
+    --danger: #e57373;
+    --white: #1c221e;                /* Inputs/drawers background in dark theme */
+}
+
+/* Specific elements adjustments for dark mode */
+html.dark-theme body {
+    background-color: var(--bg-base);
+    color: var(--text-dark);
+}
+
+html.dark-theme .header {
+    background: rgba(18, 22, 20, 0.85);
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark-theme .logo-text span {
+    color: var(--accent);
+}
+
+html.dark-theme #search-input {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-dark);
+}
+
+html.dark-theme #search-input:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(82, 183, 136, 0.15);
+}
+
+html.dark-theme .filter-tabs {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+html.dark-theme .filter-tab {
+    color: var(--text-medium);
+}
+
+html.dark-theme .filter-tab:hover {
+    color: var(--primary-light);
+}
+
+html.dark-theme .filter-tab.active {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--primary-light);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+html.dark-theme .product-card {
+    border-color: rgba(255, 255, 255, 0.04);
+}
+
+html.dark-theme .product-image-container {
+    background-color: #171d19;
+}
+
+html.dark-theme .add-to-cart-btn {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--primary-light);
+    border-color: rgba(82, 183, 136, 0.25);
+}
+
+html.dark-theme .add-to-cart-btn:hover {
+    background-color: var(--primary-ultra-light);
+    border-color: var(--primary-light);
+}
+
+html.dark-theme .promises-section {
+    background: linear-gradient(135deg, #1c221e 0%, #121614 100%);
+    border-color: rgba(212, 175, 55, 0.1);
+}
+
+html.dark-theme .modal-overlay,
+html.dark-theme .cart-drawer-overlay {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+html.dark-theme .modal-content,
+html.dark-theme .auth-modal-content {
+    background-color: #1c221e;
+    color: var(--text-dark);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html.dark-theme .form-group input,
+html.dark-theme .form-group textarea,
+html.dark-theme #delivery-address-input,
+html.dark-theme #chatbot-user-input {
+    background-color: #121614 !important;
+    color: var(--text-dark) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html.dark-theme .form-group input:focus,
+html.dark-theme .form-group textarea:focus,
+html.dark-theme #delivery-address-input:focus,
+html.dark-theme #chatbot-user-input:focus {
+    border-color: var(--primary) !important;
+}
+
+html.dark-theme .cart-toggle-btn {
+    color: #121614 !important;
+    font-weight: 800;
+}
+
+html.dark-theme .cart-badge {
+    border-color: #1c221e;
+    color: #121614;
+    font-weight: 800;
+}
+
+html.dark-theme #receipt-upload-trigger {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+html.dark-theme #receipt-upload-trigger:hover {
+    background-color: var(--primary-ultra-light);
+}
+
+html.dark-theme #receipt-upload-wrapper {
+    background-color: #121614;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Premium Glassmorphic Chatbot ("Laxmi") Dark Theme Overrides */
+html.dark-theme #chatbot-window {
+    background: rgba(28, 34, 30, 0.9) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark-theme .bot-row .chat-bubble {
+    background-color: var(--primary-ultra-light) !important; /* Deep forest green #1b4332 */
+    color: var(--text-dark) !important; /* High contrast off-white */
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+html.dark-theme .user-row .chat-bubble {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%) !important;
+    color: #121614 !important; /* Deep charcoal text for high contrast on bright green bubble */
+    font-weight: 500;
+}
+
+html.dark-theme .chat-prompt-chip {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    color: var(--primary-light) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark-theme .chat-prompt-chip:hover {
+    background-color: var(--primary-ultra-light) !important;
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+html.dark-theme #chatbot-prompt-container {
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark-theme #chatbot-input-form {
+    background: rgba(28, 34, 30, 0.95) !important;
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark-theme .typing-indicator-bubble {
+    background-color: var(--primary-ultra-light) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark-theme .typing-indicator-bubble span {
+    background-color: var(--text-medium) !important;
 }

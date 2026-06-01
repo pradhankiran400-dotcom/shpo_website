@@ -1,2 +1,6 @@
 venv/
 __pycache__/
+data/settings.json
+*.db
+used_utrs.txt
+.env

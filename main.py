@@ -13,7 +13,13 @@ from datetime import datetime
 import hashlib
 import os
 import shutil
+from typing import Optional
+from data.settings_manager import load_settings, save_settings, get_effective_gemini_key
 
+class SettingsUpdate(BaseModel):
+    gemini_api_key: Optional[str] = None
+    ai_verification_enabled: Optional[bool] = None
+    store_upi_id: Optional[str] = None
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -67,7 +73,8 @@ def sync_orders_to_file(db: Session):
                 "payment_method": order.payment_method,
                 "order_status": order.order_status,
                 "receipt_image_url": order.receipt_image_url,
-                "phone_number": order.phone_number
+                "phone_number": order.phone_number,
+                "ai_forensics_json": order.ai_forensics_json
             })
         with open("orders.json", "w", encoding="utf-8") as f:
             json.dump(orders_list, f, indent=4, ensure_ascii=False)
@@ -153,6 +160,30 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 
+@app.get("/api/settings")
+def get_settings():
+    settings = load_settings()
+    masked_key = ""
+    raw_key = settings.get("gemini_api_key", "")
+    if raw_key:
+        if len(raw_key) > 8:
+            masked_key = f"{raw_key[:4]}...{raw_key[-4:]}"
+        else:
+            masked_key = "****"
+    return {
+        "gemini_api_key": masked_key,
+        "ai_verification_enabled": settings.get("ai_verification_enabled", True),
+        "store_upi_id": settings.get("store_upi_id", "9078445116@ybl")
+    }
+
+@app.post("/api/settings")
+def update_settings(settings_data: SettingsUpdate):
+    success = save_settings(settings_data.dict(exclude_unset=True))
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to save settings!")
+    return {"message": "Settings saved successfully!"}
+
+
 @app.get("/", response_class=HTMLResponse)
 def read_home(request:Request , db:Session = Depends(get_db)):
     result = db.execute(select(models.Product))
@@ -175,14 +206,14 @@ def update_products(product_id:int, price_data: PriceUpdate,db: Session = Depend
         raise HTTPException(status_code=404, detail="Product nahi mila!")
     
     product.price = price_data.price
-    db .commit()
+    db.commit()
     db.refresh(product)
+    sync_products_to_file(db)
     return {"message": f"Price updated to ₹{product.price} successfully!"}
 
 @app.post("/api/products/", response_model=ProductResponse)
 def add_new_product(product_data: ProductCreate, db: Session = Depends(get_db)):
     
-
     new_product = models.Product(
         name=product_data.name,
         category=product_data.category,
@@ -197,8 +228,117 @@ def add_new_product(product_data: ProductCreate, db: Session = Depends(get_db)):
     db.add(new_product)      
     db.commit()              
     db.refresh(new_product)  
+    sync_products_to_file(db)
     
     return new_product
+
+
+def make_http_post(url: str, json_data: dict, headers: dict) -> bytes:
+    import json
+    data = json.dumps(json_data).encode("utf-8")
+    try:
+        import requests
+        resp = requests.post(url, json=json_data, headers=headers, timeout=25)
+        resp.raise_for_status()
+        return resp.content
+    except Exception as e:
+        print(f"[SETTINGS HTTP POST WARNING]: Failed to use 'requests' library, falling back to 'urllib': {e}")
+        import urllib.request
+        req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=25) as response:
+            return response.read()
+
+def analyze_receipt_with_gemini(image_path: str, api_key: str) -> dict:
+    import base64
+    import json
+    
+    # Detect mime type
+    mime_type = "image/png"
+    if image_path.lower().endswith((".jpg", ".jpeg")):
+        mime_type = "image/jpeg"
+    elif image_path.lower().endswith(".webp"):
+        mime_type = "image/webp"
+        
+    with open(image_path, "rb") as f:
+        img_bytes = f.read()
+        
+    b64_data = base64.b64encode(img_bytes).decode("utf-8")
+    
+    # Call Gemini REST API
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    headers = {"Content-Type": "application/json"}
+    
+    system_prompt = (
+        "You are an expert digital forensics examiner specializing in identifying fake, forged, or edited "
+        "mobile screenshots of UPI payment receipts (such as Google Pay, PhonePe, Paytm, BHIM, bank apps, etc.). "
+        "Your task is to visually analyze the screenshot and determine if it has been manipulated (Photoshopped, "
+        "digitally stitched, generated using a fake receipt app/website) or if it is an authentic original screenshot.\n\n"
+        "Return a JSON object STRICTLY matching this schema:\n"
+        "{\n"
+        "  \"is_authentic\": boolean,\n"
+        "  \"confidence_score\": float (between 0.0 and 1.0),\n"
+        "  \"payment_app\": string (e.g. 'Google Pay', 'PhonePe', 'Paytm', 'BHIM', 'Unknown'),\n"
+        "  \"detected_amount\": float,\n"
+        "  \"detected_utr\": string (12-digit transaction ID or UTR number as a string),\n"
+        "  \"detected_timestamp\": string (date and time formatted as standard text),\n"
+        "  \"receiver_upi_id\": string (receiver UPI address if visible),\n"
+        "  \"tampering_indicators\": [string] (list of specific visual anomalies, misalignments, abnormal text compression, font mismatches, etc.),\n"
+        "  \"forensic_analysis_details\": string (clear detailed explanation of your visual scan findings)\n"
+        "}\n\n"
+        "Key aspects to visually evaluate:\n"
+        "1. Font Consistency: Check if the transaction amount, UTR, and timestamp text match the exact font typeface, weight, size, and blurriness of surrounding text. Fake receipts generated by web generators or edit tools almost always show slight typeface/blur variations.\n"
+        "2. Alignment & Spacing: Check for misalignment, crooked baseline angles, or inconsistent margins of text elements relative to the app UI lines.\n"
+        "3. Compression Artifacts / Stitching: Scan closely for digital halos, blur blocks, pixelation differences, or color mismatches around numbers and text blocks (indicating copy-pasting or text erasing).\n"
+        "4. Layout Legitimacy: Check if the layout perfectly conforms to real transaction receipt interfaces of Google Pay, PhonePe, Paytm, or BHIM. Spot fake layouts generated by known receipt mockups (which often miss dynamic elements, status ticks, or have incorrect headers).\n"
+        "5. Transaction Success: Ensure the receipt clearly displays that the payment is successful/completed, not failed, pending, or in draft status."
+    )
+    
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": system_prompt},
+                    {
+                        "inlineData": {
+                            "mimeType": mime_type,
+                            "data": b64_data
+                        }
+                    }
+                ]
+            }
+        ],
+        "generationConfig": {
+            "responseMimeType": "application/json"
+        }
+    }
+    
+    response_bytes = make_http_post(url, payload, headers)
+    response_json = json.loads(response_bytes.decode("utf-8"))
+    
+    if "error" in response_json:
+        error_info = response_json["error"]
+        raise Exception(f"Gemini API returned error: {error_info.get('message', 'Unknown error')} (code: {error_info.get('code')})")
+        
+    if "candidates" not in response_json or not response_json["candidates"]:
+        raise Exception(f"Gemini response has no candidates: {json.dumps(response_json)}")
+        
+    # Parse text from candidate response
+    candidate = response_json["candidates"][0]
+    part_text = candidate["content"]["parts"][0]["text"]
+    
+    # Clean possible markdown wrapping blocks (like ```json ... ```)
+    clean_text = part_text.strip()
+    if clean_text.startswith("```"):
+        # Strip starting block
+        clean_text = clean_text.split("```", 1)[1]
+        if clean_text.startswith("json"):
+            clean_text = clean_text.split("json", 1)[1]
+        # Strip ending block
+        if clean_text.endswith("```"):
+            clean_text = clean_text.rsplit("```", 1)[0]
+    
+    result = json.loads(clean_text.strip())
+    return result
 
 
 @app.post("/api/orders/", response_model=OrderResponse)
@@ -206,200 +346,283 @@ def create_new_order(order_data: OrderCreate, db: Session = Depends(get_db)):
     # ----------------------------------------------------
     # LOCAL PYTHON OCR RECEIPT AMOUNT VALIDATION
     # ----------------------------------------------------
+    ai_forensics_json_str = None
+
+    # ----------------------------------------------------
+    # UPI RECEIPT FORENSICS & VERIFICATION (GEMINI AI + FALLBACK)
+    # ----------------------------------------------------
     if order_data.payment_method == "UPI" and order_data.receipt_image_url:
         relative_path = order_data.receipt_image_url.lstrip("/")
         if os.path.exists(relative_path):
-            try:
-                from PIL import Image
-                import re
-                import shutil
-
-                # ----------------------------------------------------
-                # RECEIPT FORENSICS: ASPECT RATIO CHECK
-                # ----------------------------------------------------
-                img = Image.open(relative_path)
-                width, height = img.size
-                print(f"[SECURITY FORENSICS]: Verifying image dimensions: {width}x{height}")
-                if width >= height:
-                    error_msg = (
-                        "Security Verification Failed: The uploaded receipt image appears to be in landscape or square format. "
-                        "UPI payment screenshots (Google Pay, PhonePe, Paytm, etc.) must be vertical portrait mobile screenshots. "
-                        "Please upload a full, unedited mobile screenshot of your payment receipt."
-                    )
-                    print(f"[SECURITY ALERT]: Blocked receipt due to landscape dimensions ({width}x{height})")
-                    raise HTTPException(status_code=400, detail=error_msg)
-
-                # ----------------------------------------------------
-                # RECEIPT FORENSICS: METADATA EDITOR SOFTWARE CHECK
-                # ----------------------------------------------------
-                is_edited = False
-                editor_signature = ""
+            gemini_api_key = get_effective_gemini_key()
+            settings = load_settings()
+            ai_enabled = settings.get("ai_verification_enabled", True)
+            
+            gemini_verified = False
+            
+            # --- PHASE A: GEMINI AI VISUAL FORENSICS SCAN ---
+            if gemini_api_key and ai_enabled:
+                print(f"[AI RECEIPT FORENSICS]: Launching Gemini Visual Analysis on '{relative_path}'...")
                 try:
-                    exif_data = img._getexif()
-                    if exif_data:
-                        from PIL.ExifTags import TAGS
-                        for tag, value in exif_data.items():
-                            tag_name = TAGS.get(tag, tag)
-                            if tag_name in ("Software", "ImageHistory", "ProcessingSoftware", "Artist"):
-                                val_str = str(value).lower()
-                                suspicious_editors = [
-                                    "photoshop", "picsart", "pixellab", "canva", "gimp", 
-                                    "lightroom", "snapseed", "phonto", "editor", "paint.net"
-                                ]
-                                for editor in suspicious_editors:
-                                    if editor in val_str:
-                                        is_edited = True
-                                        editor_signature = f"{tag_name}: {value}"
-                                        break
-                except Exception as ex_err:
-                    print(f"[METADATA SCAN WARNING]: Could not read EXIF tags: {ex_err}")
-
-                if is_edited:
-                    error_msg = (
-                        f"Security Alert: Digital forensics scan detected that this receipt has been saved or modified "
-                        f"using image editing software ({editor_signature}). "
-                        f"To protect against fraud, edited receipts are strictly blocked! "
-                        f"Please upload an authentic, direct, unedited screenshot of your UPI app transaction page."
-                    )
-                    print(f"[SECURITY ALERT]: Blocked edited receipt. Editing signature: {editor_signature}")
-                    raise HTTPException(status_code=400, detail=error_msg)
-
-                # ----------------------------------------------------
-                # LOCAL PYTHON OCR VERIFICATION
-                # ----------------------------------------------------
-                import pytesseract
-                
-                # Auto-detect Tesseract binary on Windows standard paths
-                if not shutil.which("tesseract"):
-                    std_win_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-                    if os.path.exists(std_win_path):
-                        pytesseract.pytesseract.tesseract_cmd = std_win_path
-
-                # Run local OCR
-                ocr_text = pytesseract.image_to_string(img)
-                
-                print("\n[LOCAL OCR PROCESSING] UPI Receipt Screenshot:")
-                print("--------------------------------------------------")
-                print(ocr_text.strip()[:600])
-                print("--------------------------------------------------")
-
-                # ----------------------------------------------------
-                # RECEIPT FORENSICS: UPI KEYWORD STRUCTURE CHECK
-                # ----------------------------------------------------
-                ocr_lower = ocr_text.lower()
-                upi_keywords = [
-                    "upi", "transaction", "utr", "ref", "completed", "success", "paid",
-                    "transferred", "google pay", "gpay", "phonepe", "paytm", "bhim", "sbi",
-                    "hdfc", "icici", "sent", "successful", "debited", "bank", "payment"
-                ]
-                has_upi_keywords = any(kw in ocr_lower for kw in upi_keywords)
-                if not has_upi_keywords:
-                    # Look for spaces stripped version just in case
-                    no_spaces_lower = re.sub(r'\s+', '', ocr_lower)
-                    has_upi_keywords = any(kw in no_spaces_lower for kw in upi_keywords)
-
-                if not has_upi_keywords:
-                    error_msg = (
-                        "Security Verification Failed: The uploaded image does not appear to be a valid mobile "
-                        "UPI payment receipt. No payment transaction markers (e.g. UPI, UTR, Success, PhonePe, Paytm, GPay) "
-                        "were found in the image. Please upload a authentic, direct transaction status screenshot."
-                    )
-                    print("[SECURITY ALERT]: Blocked image. No UPI payment receipt keywords found in OCR text.")
-                    raise HTTPException(status_code=400, detail=error_msg)
-
-                # ----------------------------------------------------
-                # RECEIPT FORENSICS: UTR TRANSACTION DEDUPLICATION
-                # ----------------------------------------------------
-                utrs = re.findall(r'\b\d{12}\b', ocr_text)
-                if not utrs:
-                    # Try stripping spaces/dots and searching again (e.g. "1234 5678 9012" or "1234.5678.9012")
-                    no_spaces = re.sub(r'[\s\.\-]+', '', ocr_text)
-                    utrs = re.findall(r'\b\d{12}\b', no_spaces)
-
-                detected_utr = None
-                if utrs:
-                    detected_utr = utrs[0]
-                    print(f"[UTR DETECTED]: Found UPI Transaction ID / UTR: {detected_utr}")
+                    report = analyze_receipt_with_gemini(relative_path, gemini_api_key)
+                    print(f"[AI FORENSICS REPORT RECEIVED]: {json.dumps(report, indent=2)}")
                     
-                    # Verify against local flat-file deduplication registry
-                    registry_file = "used_utrs.txt"
-                    used_utrs = []
-                    if os.path.exists(registry_file):
-                        with open(registry_file, "r", encoding="utf-8") as f:
-                            used_utrs = [line.strip() for line in f.readlines() if line.strip()]
+                    # 1. Verify visual authenticity
+                    is_authentic = report.get("is_authentic", True)
+                    confidence = report.get("confidence_score", 1.0)
                     
-                    if detected_utr in used_utrs:
+                    if not is_authentic and confidence > 0.65:
+                        anomalies = report.get("tampering_indicators", [])
+                        reason = report.get("forensic_analysis_details", "Image forgery detected by AI scan.")
                         error_msg = (
-                            f"Security Alert: This payment transaction (UTR / Ref ID: {detected_utr}) has already "
-                            f"been used for a prior order! Reusing transaction receipts is strictly prohibited. "
-                            f"Please complete a new payment and upload a fresh, valid payment screenshot."
+                            f"AI Forensics Alert: Digital manipulation or forgery detected in receipt screenshot! "
+                            f"(Confidence: {int(confidence*100)}%). Anomalies found: {', '.join(anomalies) if anomalies else 'Edited text font/boundaries'}. "
+                            f"Details: {reason}. Edited or mock receipts are strictly blocked! Please complete an authentic transaction and upload a fresh, unedited payment screenshot."
                         )
-                        print(f"[SECURITY ALERT]: Duplicate UTR attempt blocked: {detected_utr}")
+                        print(f"[AI SECURITY BLOCKED]: Forgery detected! Indicators: {anomalies}")
+                        raise HTTPException(status_code=400, detail=error_msg)
+                    
+                    # 2. Extract and match amount
+                    detected_amount = report.get("detected_amount")
+                    target_amount = order_data.total_price
+                    
+                    if detected_amount is not None:
+                        try:
+                            amt_val = float(detected_amount)
+                            if abs(amt_val - target_amount) > 1.00:
+                                error_msg = (
+                                    f"AI Verification Failed: The transaction amount extracted by AI (Rs. {amt_val:.2f}) "
+                                    f"does not match your order total of Rs. {target_amount:.2f}! "
+                                    f"Please upload the correct payment screenshot matching this order total."
+                                )
+                                print(f"[AI AMOUNT MISMATCH]: Extracted Rs. {amt_val:.2f} vs Order Rs. {target_amount:.2f}")
+                                raise HTTPException(status_code=400, detail=error_msg)
+                        except ValueError:
+                            pass
+                            
+                    # 3. Check UTR deduplication
+                    detected_utr = str(report.get("detected_utr") or "").strip()
+                    if detected_utr and len(detected_utr) >= 8:
+                        # Normalize UTR
+                        import re
+                        detected_utr = re.sub(r'\D', '', detected_utr)
+                        if len(detected_utr) >= 12:
+                            detected_utr = detected_utr[:12]
+                            
+                        print(f"[AI UTR EXTRACTED]: {detected_utr}")
+                        registry_file = "used_utrs.txt"
+                        used_utrs = []
+                        if os.path.exists(registry_file):
+                            with open(registry_file, "r", encoding="utf-8") as f:
+                                used_utrs = [line.strip() for line in f.readlines() if line.strip()]
+                                
+                        if detected_utr in used_utrs:
+                            error_msg = (
+                                f"AI Security Alert: This transaction UTR / Ref ID: {detected_utr} has already "
+                                f"been used for a prior order! Reusing transaction screenshots is strictly prohibited. "
+                                f"Please upload a fresh, valid payment screenshot."
+                            )
+                            print(f"[AI UTR DUPLICATE]: Blocked reuse of UTR {detected_utr}")
+                            raise HTTPException(status_code=400, detail=error_msg)
+                            
+                        # Save unique UTR to registry file
+                        with open(registry_file, "a", encoding="utf-8") as f:
+                            f.write(detected_utr + "\n")
+                            
+                    # Visual analysis successful!
+                    ai_forensics_json_str = json.dumps(report)
+                    gemini_verified = True
+                    print("[AI FORENSICS VERIFICATION SUCCESSFUL]: Receipt verified authentic by Gemini.")
+                    
+                except HTTPException:
+                    raise
+                except Exception as gemini_err:
+                    print(f"\n[AI FORENSICS ERROR]: Failed to analyze receipt with Gemini API: {gemini_err}")
+                    print("Falling back to local OCR and metadata scan...\n")
+            
+            # --- PHASE B: LOCAL OCR & EXIF SCAN FALLBACK ---
+            if not gemini_verified:
+                try:
+                    from PIL import Image
+                    import re
+                    import shutil
+
+                    # Aspect Ratio check
+                    img = Image.open(relative_path)
+                    width, height = img.size
+                    print(f"[LOCAL SECURITY FORENSICS]: Verifying image dimensions: {width}x{height}")
+                    if width >= height:
+                        error_msg = (
+                            "Security Verification Failed: The uploaded receipt image appears to be in landscape or square format. "
+                            "UPI payment screenshots (Google Pay, PhonePe, Paytm, etc.) must be vertical portrait mobile screenshots. "
+                            "Please upload a full, unedited mobile screenshot of your payment receipt."
+                        )
+                        print(f"[LOCAL SECURITY ALERT]: Blocked receipt due to landscape dimensions ({width}x{height})")
                         raise HTTPException(status_code=400, detail=error_msg)
 
-                # ----------------------------------------------------
-                # AMOUNT MATCHING VALIDATION
-                # ----------------------------------------------------
-                target_amount = order_data.total_price
-                target_str = f"{target_amount:.2f}"
-                target_int = str(int(target_amount))
+                    # Metadata Editor check
+                    is_edited = False
+                    editor_signature = ""
+                    try:
+                        exif_data = img._getexif()
+                        if exif_data:
+                            from PIL.ExifTags import TAGS
+                            for tag, value in exif_data.items():
+                                tag_name = TAGS.get(tag, tag)
+                                if tag_name in ("Software", "ImageHistory", "ProcessingSoftware", "Artist"):
+                                    val_str = str(value).lower()
+                                    suspicious_editors = [
+                                        "photoshop", "picsart", "pixellab", "canva", "gimp", 
+                                        "lightroom", "snapseed", "phonto", "editor", "paint.net"
+                                    ]
+                                    for editor in suspicious_editors:
+                                        if editor in val_str:
+                                            is_edited = True
+                                            editor_signature = f"{tag_name}: {value}"
+                                            break
+                    except Exception as ex_err:
+                        print(f"[METADATA SCAN WARNING]: Could not read EXIF tags: {ex_err}")
 
-                cleaned_text = ocr_text.replace(",", "")
-                cleaned_decimals = re.findall(r'\d+\.\d{2}', cleaned_text)
-                
-                matched = False
-                matched_val = ""
+                    if is_edited:
+                        error_msg = (
+                            f"Security Alert: Digital forensics scan detected that this receipt has been saved or modified "
+                            f"using image editing software ({editor_signature}). "
+                            f"To protect against fraud, edited receipts are strictly blocked! "
+                            f"Please upload an authentic, direct, unedited screenshot of your UPI app transaction page."
+                        )
+                        print(f"[LOCAL SECURITY ALERT]: Blocked edited receipt. Editing signature: {editor_signature}")
+                        raise HTTPException(status_code=400, detail=error_msg)
 
-                if target_str in ocr_text or target_str in cleaned_text:
-                    matched = True
-                    matched_val = target_str
-                else:
-                    for dec_str in cleaned_decimals:
-                        try:
-                            val = float(dec_str)
-                            if abs(val - target_amount) <= 1.00:
-                                matched = True
-                                matched_val = dec_str
-                                break
-                        except ValueError:
-                            continue
+                    # Pytesseract OCR Verification
+                    import pytesseract
+                    if not shutil.which("tesseract"):
+                        std_win_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+                        if os.path.exists(std_win_path):
+                            pytesseract.pytesseract.tesseract_cmd = std_win_path
 
-                if not matched and len(target_int) >= 2:
-                    if target_int in ocr_text or target_int in cleaned_text:
+                    ocr_text = pytesseract.image_to_string(img)
+                    print("\n[LOCAL OCR PROCESSING] UPI Receipt Screenshot:")
+                    print("--------------------------------------------------")
+                    print(ocr_text.strip()[:600])
+                    print("--------------------------------------------------")
+
+                    ocr_lower = ocr_text.lower()
+                    upi_keywords = [
+                        "upi", "transaction", "utr", "ref", "completed", "success", "paid",
+                        "transferred", "google pay", "gpay", "phonepe", "paytm", "bhim", "sbi",
+                        "hdfc", "icici", "sent", "successful", "debited", "bank", "payment"
+                    ]
+                    has_upi_keywords = any(kw in ocr_lower for kw in upi_keywords)
+                    if not has_upi_keywords:
+                        no_spaces_lower = re.sub(r'\s+', '', ocr_lower)
+                        has_upi_keywords = any(kw in no_spaces_lower for kw in upi_keywords)
+
+                    if not has_upi_keywords:
+                        error_msg = (
+                            "Security Verification Failed: The uploaded image does not appear to be a valid mobile "
+                            "UPI payment receipt. No payment transaction markers (e.g. UPI, UTR, Success, PhonePe, Paytm, GPay) "
+                            "were found in the image. Please upload an authentic, direct transaction status screenshot."
+                        )
+                        print("[LOCAL SECURITY ALERT]: Blocked image. No UPI payment receipt keywords found in OCR text.")
+                        raise HTTPException(status_code=400, detail=error_msg)
+
+                    # UTR deduplication
+                    utrs = re.findall(r'\b\d{12}\b', ocr_text)
+                    if not utrs:
+                        no_spaces = re.sub(r'[\s\.\-]+', '', ocr_text)
+                        utrs = re.findall(r'\b\d{12}\b', no_spaces)
+
+                    detected_utr = None
+                    if utrs:
+                        detected_utr = utrs[0]
+                        print(f"[LOCAL UTR DETECTED]: Found UPI Transaction ID / UTR: {detected_utr}")
+                        
+                        registry_file = "used_utrs.txt"
+                        used_utrs = []
+                        if os.path.exists(registry_file):
+                            with open(registry_file, "r", encoding="utf-8") as f:
+                                used_utrs = [line.strip() for line in f.readlines() if line.strip()]
+                        
+                        if detected_utr in used_utrs:
+                            error_msg = (
+                                f"Security Alert: This payment transaction (UTR / Ref ID: {detected_utr}) has already "
+                                f"been used for a prior order! Reusing transaction receipts is strictly prohibited."
+                            )
+                            print(f"[LOCAL SECURITY ALERT]: Duplicate UTR attempt blocked: {detected_utr}")
+                            raise HTTPException(status_code=400, detail=error_msg)
+
+                    # Amount verification
+                    target_amount = order_data.total_price
+                    target_str = f"{target_amount:.2f}"
+                    target_int = str(int(target_amount))
+
+                    cleaned_text = ocr_text.replace(",", "")
+                    cleaned_decimals = re.findall(r'\d+\.\d{2}', cleaned_text)
+                    
+                    matched = False
+                    matched_val = ""
+
+                    if target_str in ocr_text or target_str in cleaned_text:
                         matched = True
-                        matched_val = target_int
+                        matched_val = target_str
+                    else:
+                        for dec_str in cleaned_decimals:
+                            try:
+                                val = float(dec_str)
+                                if abs(val - target_amount) <= 1.00:
+                                    matched = True
+                                    matched_val = dec_str
+                                    break
+                            except ValueError:
+                                continue
 
-                if not matched:
-                    error_msg = (
-                        f"Verification Failed: The transaction amount extracted from "
-                        f"your uploaded UPI receipt does not match your order total of Rs. {target_amount:.2f}! "
-                        f"Please ensure you uploaded the correct payment receipt screenshot and try again."
-                    )
-                    print(f"[OCR MISMATCH]: Extracted text did not contain Rs. {target_amount:.2f}")
-                    raise HTTPException(status_code=400, detail=error_msg)
-                
-                print(f"[OCR VERIFICATION SUCCESSFUL]: Matched value {matched_val} with total Rs. {target_amount:.2f}\n")
+                    if not matched and len(target_int) >= 2:
+                        if target_int in ocr_text or target_int in cleaned_text:
+                            matched = True
+                            matched_val = target_int
 
-                # If validation passes, write UTR to registry file to prevent future reuse
-                if detected_utr:
-                    registry_file = "used_utrs.txt"
-                    with open(registry_file, "a", encoding="utf-8") as f:
-                        f.write(detected_utr + "\n")
-                    print(f"[UTR REGISTERED]: Added transaction ID {detected_utr} to used_utrs.txt registry.")
+                    if not matched:
+                        error_msg = (
+                            f"Verification Failed: The transaction amount extracted from "
+                            f"your uploaded UPI receipt does not match your order total of Rs. {target_amount:.2f}! "
+                            f"Please ensure you uploaded the correct payment receipt screenshot and try again."
+                        )
+                        print(f"[LOCAL OCR MISMATCH]: Extracted text did not contain Rs. {target_amount:.2f}")
+                        raise HTTPException(status_code=400, detail=error_msg)
+                    
+                    print(f"[LOCAL OCR VERIFICATION SUCCESSFUL]: Matched value {matched_val} with total Rs. {target_amount:.2f}\n")
 
-            except ImportError:
-                print("\n[LOCAL OCR WARNING]: 'pytesseract' or 'PIL' is not installed locally.")
-                print("Running in Smart Simulation Mode...\n")
-            except pytesseract.TesseractNotFoundError:
-                print("\n[LOCAL OCR WARNING]: Tesseract OCR engine binaries are not installed on the system path.")
-                print("To activate real-time local text extraction verification, please download Tesseract from:")
-                print("https://github.com/UB-Mannheim/tesseract/wiki")
-                print("Running in Smart Simulation Mode...\n")
-            except HTTPException:
-                raise
-            except Exception as e:
-                print(f"\n[LOCAL OCR ERROR]: Unexpected error parsing receipt screenshot: {e}")
-                print("Running in Smart Simulation Mode...\n")
+                    if detected_utr:
+                        registry_file = "used_utrs.txt"
+                        with open(registry_file, "a", encoding="utf-8") as f:
+                            f.write(detected_utr + "\n")
+                        print(f"[LOCAL UTR REGISTERED]: Added transaction ID {detected_utr} to used_utrs.txt registry.")
+
+                    # Build a structured JSON forensics block for the local OCR pass
+                    local_report = {
+                        "is_authentic": True,
+                        "confidence_score": 1.0,
+                        "payment_app": "Local OCR Verified",
+                        "detected_amount": target_amount,
+                        "detected_utr": detected_utr or "Unknown UTR",
+                        "detected_timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "receiver_upi_id": "N/A",
+                        "tampering_indicators": [],
+                        "forensic_analysis_details": "Verified via standard local OCR. Configure Gemini API key for visual forensics scanner."
+                    }
+                    ai_forensics_json_str = json.dumps(local_report)
+
+                except ImportError:
+                    print("\n[LOCAL OCR WARNING]: 'pytesseract' or 'PIL' is not installed locally.")
+                    print("Running in Smart Simulation Mode...\n")
+                except pytesseract.TesseractNotFoundError:
+                    print("\n[LOCAL OCR WARNING]: Tesseract OCR engine binaries are not installed on the system path.")
+                    print("Running in Smart Simulation Mode...\n")
+                except HTTPException:
+                    raise
+                except Exception as e:
+                    print(f"\n[LOCAL OCR ERROR]: Unexpected error parsing receipt screenshot: {e}")
+                    print("Running in Smart Simulation Mode...\n")
         else:
             print(f"\n[LOCAL OCR WARNING]: Uploaded receipt path '{relative_path}' not found on disk.")
 
@@ -415,7 +638,8 @@ def create_new_order(order_data: OrderCreate, db: Session = Depends(get_db)):
         payment_method=order_data.payment_method,
         order_status=order_data.order_status,
         receipt_image_url=order_data.receipt_image_url,
-        phone_number=order_data.phone_number
+        phone_number=order_data.phone_number,
+        ai_forensics_json=ai_forensics_json_str
     )
     db.add(new_order)
     db.commit()

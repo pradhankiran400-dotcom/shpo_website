@@ -20,6 +20,46 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Custom Style -->
     <link rel="stylesheet" href="/static/css/style.css">
+    <script>
+        // Check dark mode preference immediately to prevent screen flash
+        (function() {
+            const savedTheme = localStorage.getItem("theme");
+            if (savedTheme === "dark") {
+                document.documentElement.classList.add("dark-theme");
+            } else if (savedTheme === "light") {
+                document.documentElement.classList.remove("dark-theme");
+            } else {
+                const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+                if (systemPrefersDark) {
+                    document.documentElement.classList.add("dark-theme");
+                }
+            }
+        })();
+        
+        // Bind theme toggle event on DOMContentLoaded
+        document.addEventListener("DOMContentLoaded", () => {
+            const themeToggleBtn = document.getElementById("theme-toggle");
+            if (themeToggleBtn) {
+                themeToggleBtn.addEventListener("click", () => {
+                    const isDark = document.documentElement.classList.toggle("dark-theme");
+                    localStorage.setItem("theme", isDark ? "dark" : "light");
+                    
+                    const icon = themeToggleBtn.querySelector("i") || themeToggleBtn.querySelector("svg");
+                    if (icon) {
+                        icon.setAttribute("data-lucide", isDark ? "sun" : "moon");
+                        if (window.lucide) window.lucide.createIcons();
+                    }
+                });
+                
+                const icon = themeToggleBtn.querySelector("i") || themeToggleBtn.querySelector("svg");
+                if (icon) {
+                    const isCurrentlyDark = document.documentElement.classList.contains("dark-theme");
+                    icon.setAttribute("data-lucide", isCurrentlyDark ? "sun" : "moon");
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            }
+        });
+    </script>
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <!-- CSS Confetti & Thank You Animation -->
     <style>
@@ -141,6 +181,10 @@
 
             <!-- Header Actions -->
             <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
+                <!-- Theme Toggle Button -->
+                <button id="theme-toggle" class="theme-toggle-btn" style="background: transparent; border: none; cursor: pointer; color: var(--primary); padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: var(--transition-fast);" title="Toggle Dark/Bright Mode">
+                    <i data-lucide="moon" style="width: 20px; height: 20px;"></i>
+                </button>
                 <!-- User Profile Trigger -->
                 <div id="user-profile-section">
                     <button class="auth-toggle-btn" id="auth-modal-toggle"
@@ -477,7 +521,7 @@
                 <!-- UPI Online Payment Panel -->
                 <div id="upi-info-panel" style="display: none;">
                     <div class="qr-code-wrapper" style="text-align: center; background-color: var(--bg-base); border: 1px solid rgba(27,67,50,0.06); padding: 20px; border-radius: var(--radius-md); max-width: 260px; margin: 0 auto 20px auto; box-shadow: var(--shadow-sm);">
-                        <img src="/static/image/payment_qr.png" alt="UPI Payment QR Code" style="width: 180px; height: 180px; object-fit: contain; display: block; margin: 0 auto; border-radius: var(--radius-sm);">
+                        <img id="checkout-qr-image" src="/static/image/payment_qr.png" alt="UPI Payment QR Code" style="width: 180px; height: 180px; object-fit: contain; display: block; margin: 0 auto; border-radius: var(--radius-sm);">
                         <div style="margin-top: 10px; font-size: 0.85rem; font-weight: 700; color: var(--primary-dark);">
                             Payable Amount: <span style="color: var(--success); font-size: 1rem;">₹<span id="payment-grandtotal-val">0.00</span></span>
                         </div>
@@ -498,7 +542,7 @@
                     </div>
 
                     <!-- Custom Receipt Upload Input -->
-                    <div id="receipt-upload-wrapper" style="margin-top: 16px; margin-bottom: 20px; border: 1.5px dashed rgba(27,67,50,0.15); padding: 16px; border-radius: var(--radius-md); background-color: var(--white); text-align: center;">
+                    <div id="receipt-upload-wrapper" style="margin-top: 16px; margin-bottom: 20px; border: 1.5px dashed rgba(27,67,50,0.15); padding: 16px; border-radius: var(--radius-md); background-color: var(--bg-card); text-align: center;">
                         <label for="payment-receipt-input" style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 8px; cursor: pointer;">
                             📤 Upload Payment Receipt (Required)
                         </label>
@@ -782,8 +826,8 @@
             </div>
 
             <!-- Message Input Form -->
-            <form id="chatbot-input-form" style="border-top: 1px solid rgba(27,67,50,0.1); padding: 10px 12px; display: flex; gap: 8px; background: rgba(255,255,255,0.95); align-items: center;">
-                <input type="text" id="chatbot-user-input" placeholder="Type a message..." required style="flex: 1; height: 36px; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-xl); padding: 0 14px; font-family: var(--font-body); font-size: 0.88rem; outline: none; transition: var(--transition-smooth); background-color: var(--white);">
+            <form id="chatbot-input-form" style="border-top: 1px solid rgba(27,67,50,0.1); padding: 10px 12px; display: flex; gap: 8px; background: var(--bg-card); align-items: center;">
+                <input type="text" id="chatbot-user-input" placeholder="Type a message..." required style="flex: 1; height: 36px; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-xl); padding: 0 14px; font-family: var(--font-body); font-size: 0.88rem; outline: none; transition: var(--transition-smooth); background-color: var(--bg-base);">
                 <button type="submit" style="width: 36px; height: 36px; border-radius: 50%; background-color: var(--primary); border: none; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; box-shadow: var(--shadow-sm); transition: var(--transition-fast);">
                     <i data-lucide="send" style="width: 14px; height: 14px; margin-left: 2px;"></i>
                 </button>

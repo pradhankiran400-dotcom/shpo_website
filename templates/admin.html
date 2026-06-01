@@ -4,6 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maa Bankeswari Rice Store - Admin Dashboard</title>
+    <script>
+        // Check dark mode preference immediately to prevent screen flash
+        (function() {
+            const savedTheme = localStorage.getItem("theme");
+            if (savedTheme === "dark") {
+                document.documentElement.classList.add("dark-theme");
+            } else if (savedTheme === "light") {
+                document.documentElement.classList.remove("dark-theme");
+            } else {
+                const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+                if (systemPrefersDark) {
+                    document.documentElement.classList.add("dark-theme");
+                }
+            }
+        })();
+        
+        // Bind theme toggle event on DOMContentLoaded
+        document.addEventListener("DOMContentLoaded", () => {
+            const themeToggleBtn = document.getElementById("theme-toggle");
+            if (themeToggleBtn) {
+                themeToggleBtn.addEventListener("click", () => {
+                    const isDark = document.documentElement.classList.toggle("dark-theme");
+                    localStorage.setItem("theme", isDark ? "dark" : "light");
+                    
+                    const icon = themeToggleBtn.querySelector("i") || themeToggleBtn.querySelector("svg");
+                    if (icon) {
+                        icon.setAttribute("data-lucide", isDark ? "sun" : "moon");
+                        if (window.lucide) window.lucide.createIcons();
+                    }
+                });
+                
+                const icon = themeToggleBtn.querySelector("i") || themeToggleBtn.querySelector("svg");
+                if (icon) {
+                    const isCurrentlyDark = document.documentElement.classList.contains("dark-theme");
+                    icon.setAttribute("data-lucide", isCurrentlyDark ? "sun" : "moon");
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            }
+        });
+    </script>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,6 +79,90 @@
             --font-body: 'Outfit', sans-serif;
             --transition-fast: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             --transition-normal: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            --white: #ffffff;
+        }
+
+        /* Dark Theme Variables */
+        html.dark-theme {
+            --primary: #40916c;
+            --primary-dark: #ebf5ee;
+            --primary-light: #52b788;
+            --primary-ultra-light: #1b4332;
+            --accent: #ffd700;
+            --success: #4caf50;
+            --danger: #e57373;
+            --warning: #ffb74d;
+            --text-dark: #f1f5f2;
+            --text-medium: #c2d1c9;
+            --text-light: #8da397;
+            --bg-base: #121614;
+            --bg-card: rgba(28, 34, 30, 0.9);
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.25);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.3);
+            --shadow-lg: 0 16px 40px rgba(0,0,0,0.4);
+            --white: #1c221e;
+        }
+
+        html.dark-theme body {
+            background-image: radial-gradient(circle at 10% 20%, rgba(82, 183, 136, 0.04) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(255, 215, 0, 0.02) 0%, transparent 40%) !important;
+        }
+
+        /* Dark Theme CSS Overrides */
+        html.dark-theme #admin-lock-screen > div {
+            background: rgba(28, 34, 30, 0.98) !important;
+            border-color: rgba(64, 145, 108, 0.3) !important;
+        }
+
+        html.dark-theme #admin-lock-screen input {
+            background-color: #121614 !important;
+            color: #f1f5f2 !important;
+            border-color: rgba(64, 145, 108, 0.25) !important;
+        }
+
+        html.dark-theme #orders-filter-bar input,
+        html.dark-theme #user-search-input,
+        html.dark-theme #gemini-key-input,
+        html.dark-theme #store-upi-input {
+            background-color: #121614 !important;
+            color: #f1f5f2 !important;
+            border-color: rgba(64, 145, 108, 0.2) !important;
+        }
+
+        html.dark-theme .order-receipt-proof,
+        html.dark-theme .lightbox-content {
+            background-color: #1c221e !important;
+            border-color: rgba(64, 145, 108, 0.2) !important;
+        }
+
+        /* Order Filter Pills styling */
+        .order-filter-pill {
+            background-color: rgba(27, 67, 50, 0.05) !important;
+            color: var(--text-medium) !important;
+            transition: var(--transition-fast);
+        }
+        .order-filter-pill:hover {
+            background-color: rgba(27, 67, 50, 0.1) !important;
+            color: var(--primary) !important;
+        }
+        .order-filter-pill.active {
+            background-color: var(--primary) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(45, 106, 79, 0.2);
+        }
+        
+        html.dark-theme .order-filter-pill {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            color: var(--text-medium) !important;
+        }
+        html.dark-theme .order-filter-pill:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            color: var(--primary-light) !important;
+        }
+        html.dark-theme .order-filter-pill.active {
+            background-color: var(--primary) !important;
+            color: #121614 !important;
+            font-weight: 800;
         }
 
         * {
@@ -612,9 +736,16 @@
                 </div>
             </a>
             
-            <div class="status-badge-container">
-                <div class="status-dot"></div>
-                <span>Server Online & Listening</span>
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <!-- Theme Toggle Button -->
+                <button id="theme-toggle" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.15); cursor: pointer; color: white; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: var(--transition-fast);" title="Toggle Dark/Bright Mode">
+                    <i data-lucide="moon" style="width: 18px; height: 18px;"></i>
+                </button>
+                
+                <div class="status-badge-container">
+                    <div class="status-dot"></div>
+                    <span>Server Online & Listening</span>
+                </div>
             </div>
         </div>
     </header>
@@ -656,6 +787,59 @@
                 <div class="summary-icon" style="background-color: rgba(45, 106, 79, 0.1); color: var(--primary);"><i data-lucide="users"></i></div>
             </div>
         </section>
+
+        <!-- Gemini AI Security & Forensics Settings Card -->
+        <section id="ai-security-settings-section" style="background: var(--bg-card); border: 1.5px solid rgba(45, 106, 79, 0.15); border-radius: var(--radius-md); padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 16px; transition: var(--transition-normal);">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 1.5px dashed rgba(27,67,50,0.1); padding-bottom: 14px; margin-bottom: 16px;">
+                <h3 style="font-family: var(--font-heading); color: var(--primary-dark); font-size: 1.3rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.6rem;">🛡️</span> Gemini AI Receipt Forensics & Security
+                </h3>
+                <span id="ai-status-indicator" style="font-size: 0.8rem; font-weight: 700; color: var(--text-light); background-color: rgba(0,0,0,0.05); padding: 4px 10px; border-radius: var(--radius-xl); display: inline-flex; align-items: center; gap: 6px;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--text-light); display: inline-block;"></span> Checking Status...
+                </span>
+            </div>
+            
+            <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+                <!-- Key Input -->
+                <div style="flex: 2; min-width: 280px; position: relative;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 8px;">🔑 Configure Gemini API Key</label>
+                    <div style="position: relative;">
+                        <input type="password" id="gemini-key-input" placeholder="Enter Gemini API Key (e.g. AIzaSy...)" style="width: 100%; padding: 10px 44px 10px 14px; font-family: var(--font-body); font-size: 0.9rem; border: 1.5px solid rgba(27,67,50,0.15); border-radius: var(--radius-sm); outline: none; transition: var(--transition-fast); background-color: var(--bg-card);">
+                        <button type="button" id="toggle-gemini-key-visibility" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-light); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px;">
+                            <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Store UPI ID Input -->
+                <div style="flex: 1.5; min-width: 220px;">
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 8px;">💳 Store Merchant UPI ID</label>
+                    <input type="text" id="store-upi-input" placeholder="e.g. 9078445116@ybl" style="width: 100%; padding: 10px 14px; font-family: var(--font-body); font-size: 0.9rem; border: 1.5px solid rgba(27,67,50,0.15); border-radius: var(--radius-sm); outline: none; transition: var(--transition-fast); background-color: var(--bg-card);">
+                </div>
+                
+                <!-- Toggle -->
+                <div style="flex: 1.2; min-width: 200px; padding-bottom: 8px;">
+                    <label style="display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: var(--primary-dark); user-select: none;">
+                        <input type="checkbox" id="ai-verification-toggle" checked style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                        Enable Visual Forensics Scan
+                    </label>
+                </div>
+                
+                <!-- Save Button -->
+                <div style="min-width: 150px;">
+                    <button type="button" id="save-ai-settings-btn" class="btn btn-approve" style="width: 100%; height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 0.85rem;">
+                        <i data-lucide="shield-check" style="width: 16px; height: 16px;"></i> Save Settings
+                    </button>
+                </div>
+            </div>
+            <div style="font-size: 0.82rem; color: var(--primary-dark); margin-top: 16px; line-height: 1.5; background-color: var(--primary-ultra-light); border-left: 4px solid var(--accent); padding: 12px 16px; border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); display: flex; gap: 8px; align-items: flex-start;">
+                <span style="font-size: 1.1rem; line-height: 1;">💡</span>
+                <div>
+                    <strong style="color: var(--primary-dark);">How it works:</strong> If enabled, visual receipt forensics are executed automatically. If no API key is specified, the system gracefully falls back to local Python OCR, maintaining zero downtime.
+                </div>
+            </div>
+        </section>
+
 
         <!-- Unified Orders Search & Filter Control Bar -->
         <section id="orders-filter-bar" style="background: var(--bg-card); border: 1px solid rgba(27,67,50,0.08); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 16px; margin-bottom: 8px;">
@@ -1070,6 +1254,7 @@
                         `).join("");
 
                         let receiptHTML = "";
+                        let aiForensicsHTML = "";
                         if (order.payment_method === "UPI" && order.receipt_image_url) {
                             receiptHTML = `
                                 <div class="order-receipt-proof" data-url="${order.receipt_image_url}">
@@ -1081,6 +1266,79 @@
                                     <i data-lucide="eye" style="width: 16px; height: 16px; color: var(--primary);"></i>
                                 </div>
                             `;
+                            
+                            let forensics = null;
+                            if (order.ai_forensics_json) {
+                                try {
+                                    forensics = typeof order.ai_forensics_json === 'string' ? JSON.parse(order.ai_forensics_json) : order.ai_forensics_json;
+                                } catch (e) {
+                                    console.error("Error parsing forensics json:", e);
+                                }
+                            }
+                            
+                            if (forensics) {
+                                const isAuthentic = forensics.is_authentic;
+                                const confidence = Math.round(forensics.confidence_score * 100);
+                                const paymentApp = forensics.payment_app || "Unknown UPI App";
+                                const detectedAmount = forensics.detected_amount !== undefined ? forensics.detected_amount : "N/A";
+                                const detectedUtr = forensics.detected_utr || "N/A";
+                                const tamperingIndicators = forensics.tampering_indicators || [];
+                                const forensicDetails = forensics.forensic_analysis_details || "";
+                                
+                                const shieldColor = isAuthentic ? "var(--success)" : "var(--danger)";
+                                const shieldBg = isAuthentic ? "rgba(46,125,50,0.06)" : "rgba(198,40,40,0.06)";
+                                const shieldLabel = isAuthentic ? "AI Verified Authentic" : "AI Suspected Forgery Alert!";
+                                
+                                let tamperingHTML = "";
+                                if (tamperingIndicators.length > 0) {
+                                    tamperingHTML = `
+                                        <div style="margin-top: 8px; font-size: 0.75rem; color: var(--danger); font-weight: 600;">
+                                            🚨 Detected Forgery Indicators:
+                                            <ul style="margin: 4px 0 0 16px; padding: 0; list-style-type: square;">
+                                                ${tamperingIndicators.map(ind => `<li>${ind}</li>`).join("")}
+                                            </ul>
+                                        </div>
+                                    `;
+                                }
+                                
+                                aiForensicsHTML = `
+                                    <div class="ai-forensics-card" style="margin-top: 10px; border: 1.5px solid ${isAuthentic ? 'rgba(46,125,50,0.15)' : 'rgba(198,40,40,0.2)'}; border-radius: var(--radius-sm); padding: 12px; background-color: ${shieldBg}; font-size: 0.8rem; box-shadow: var(--shadow-sm);">
+                                        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed ${isAuthentic ? 'rgba(46,125,50,0.12)' : 'rgba(198,40,40,0.15)'}; padding-bottom: 8px; margin-bottom: 8px;">
+                                            <strong style="color: ${shieldColor}; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px;">
+                                                <i data-lucide="${isAuthentic ? 'shield-check' : 'shield-alert'}" style="width: 15px; height: 15px; color: ${shieldColor};"></i> ${shieldLabel}
+                                            </strong>
+                                            <span style="font-size: 0.72rem; color: ${shieldColor}; font-weight: 800; background-color: white; border: 1px solid ${shieldColor}; padding: 2px 6px; border-radius: var(--radius-xl);">
+                                                Confidence: ${confidence}%
+                                            </span>
+                                        </div>
+                                        
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.78rem; color: var(--text-medium); line-height: 1.35;">
+                                            <div>📱 App: <strong style="color: var(--primary-dark);">${paymentApp}</strong></div>
+                                            <div>💰 Extracted Amt: <strong style="color: var(--success);">₹${typeof detectedAmount === 'number' ? detectedAmount.toFixed(2) : detectedAmount}</strong></div>
+                                            <div style="grid-column: span 2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                🔑 Extracted UTR: <strong style="color: var(--primary-dark); font-family: monospace; font-size: 0.85rem;">${detectedUtr}</strong>
+                                            </div>
+                                        </div>
+                                        
+                                        ${tamperingHTML}
+                                        
+                                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(0,0,0,0.04); font-size: 0.75rem; color: var(--text-medium); line-height: 1.45; font-style: italic;">
+                                            📝 <strong>AI Analysis:</strong> ${forensicDetails}
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                aiForensicsHTML = `
+                                    <div class="ai-forensics-card" style="margin-top: 10px; border: 1.5px solid rgba(27,67,50,0.1); border-radius: var(--radius-sm); padding: 12px; background-color: var(--primary-ultra-light); font-size: 0.8rem;">
+                                        <strong style="color: var(--primary-light); display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            <i data-lucide="shield" style="width: 14px; height: 14px;"></i> Local Forensics Active
+                                        </strong>
+                                        <p style="font-size: 0.75rem; color: var(--text-medium); margin-top: 4px; line-height: 1.35;">
+                                            Processed using local EXIF & metadata checks. Enable Gemini API Key above to activate full Visual AI Forensics reports.
+                                        </p>
+                                    </div>
+                                `;
+                            }
                         }
 
                         const card = `
@@ -1107,6 +1365,7 @@
                                     ${itemsHTML}
                                 </div>
                                 ${receiptHTML}
+                                ${aiForensicsHTML}
                                 <div class="order-totals">
                                     <span class="payment-desc">${order.payment_method === 'UPI' ? '📱 UPI ONLINE' : '💵 CASH ON DELIVERY'}</span>
                                     <span class="grand-total">₹${order.total_price.toFixed(2)}</span>
@@ -1599,6 +1858,115 @@
                     }
                 });
             }
+
+            // ----------------------------------------------------
+            // GEMINI AI SETTINGS INTERACTIONS
+            // ----------------------------------------------------
+            const geminiKeyInput = document.getElementById("gemini-key-input");
+            const toggleKeyVisibility = document.getElementById("toggle-gemini-key-visibility");
+            const aiVerificationToggle = document.getElementById("ai-verification-toggle");
+            const saveSettingsBtn = document.getElementById("save-ai-settings-btn");
+            const aiStatusIndicator = document.getElementById("ai-status-indicator");
+
+            // Toggle API key visibility (password/text)
+            if (toggleKeyVisibility && geminiKeyInput) {
+                toggleKeyVisibility.addEventListener("click", () => {
+                    if (geminiKeyInput.type === "password") {
+                        geminiKeyInput.type = "text";
+                        toggleKeyVisibility.innerHTML = `<i data-lucide="eye-off" style="width: 18px; height: 18px;"></i>`;
+                    } else {
+                        geminiKeyInput.type = "password";
+                        toggleKeyVisibility.innerHTML = `<i data-lucide="eye" style="width: 18px; height: 18px;"></i>`;
+                    }
+                    if (window.lucide) window.lucide.createIcons();
+                });
+            }
+
+            // Fetch current settings
+            function fetchSettings() {
+                fetch("/api/settings")
+                .then(res => {
+                    if (!res.ok) throw new Error("Settings fetch failed");
+                    return res.json();
+                })
+                .then(data => {
+                    if (geminiKeyInput && data.gemini_api_key) {
+                        geminiKeyInput.value = data.gemini_api_key;
+                    }
+                    if (document.getElementById("store-upi-input") && data.store_upi_id) {
+                        document.getElementById("store-upi-input").value = data.store_upi_id;
+                    }
+                    if (aiVerificationToggle) {
+                        aiVerificationToggle.checked = data.ai_verification_enabled;
+                    }
+                    updateStatusIndicator(data.gemini_api_key !== "", data.ai_verification_enabled);
+                })
+                .catch(err => {
+                    console.error("Error loading system settings:", err);
+                });
+            }
+
+            // Update status badge visually
+            function updateStatusIndicator(hasKey, enabled) {
+                if (!aiStatusIndicator) return;
+                
+                if (enabled) {
+                    if (hasKey) {
+                        aiStatusIndicator.style.color = "var(--success)";
+                        aiStatusIndicator.style.backgroundColor = "rgba(46,125,50,0.08)";
+                        aiStatusIndicator.innerHTML = `<span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--success); display: inline-block;"></span> AI Visual Scanner Active`;
+                    } else {
+                        aiStatusIndicator.style.color = "var(--warning)";
+                        aiStatusIndicator.style.backgroundColor = "rgba(239,108,0,0.08)";
+                        aiStatusIndicator.innerHTML = `<span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--warning); display: inline-block;"></span> OCR Fallback Active`;
+                    }
+                } else {
+                    aiStatusIndicator.style.color = "var(--text-light)";
+                    aiStatusIndicator.style.backgroundColor = "rgba(0,0,0,0.05)";
+                    aiStatusIndicator.innerHTML = `<span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--text-light); display: inline-block;"></span> Scanner Disabled`;
+                }
+            }
+
+            // Save settings click handler
+            if (saveSettingsBtn) {
+                saveSettingsBtn.addEventListener("click", () => {
+                    const keyVal = geminiKeyInput ? geminiKeyInput.value.trim() : "";
+                    const upiVal = document.getElementById("store-upi-input") ? document.getElementById("store-upi-input").value.trim() : "";
+                    const isEnabled = aiVerificationToggle ? aiVerificationToggle.checked : true;
+                    
+                    const payload = {
+                        ai_verification_enabled: isEnabled,
+                        store_upi_id: upiVal
+                    };
+                    // Only send key if it is new and not masked stars
+                    if (keyVal && !keyVal.endsWith("****")) {
+                        payload.gemini_api_key = keyVal;
+                    } else if (keyVal === "") {
+                        payload.gemini_api_key = "";
+                    }
+                    
+                    fetch("/api/settings", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(res => {
+                        if (!res.ok) throw new Error("Settings save failed");
+                        return res.json();
+                    })
+                    .then(data => {
+                        showToast("System settings successfully saved!");
+                        fetchSettings();
+                    })
+                    .catch(err => {
+                        console.error("Error saving system settings:", err);
+                        showToast("Failed to save security settings!", false);
+                    });
+                });
+            }
+
+            // Initial Settings Fetch
+            fetchSettings();
 
             // Initial fetch & poll every 10 seconds to auto-refresh pending queues!
             fetchOrders();
