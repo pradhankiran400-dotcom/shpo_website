@@ -84,6 +84,24 @@ MIGRATIONS = [
         "sql":   "ALTER TABLE orders ADD COLUMN delivery_lng REAL",
         "label": "orders.delivery_lng"
     },
+    # Add delivery_time_mins to orders
+    {
+        "check": "SELECT COUNT(*) FROM pragma_table_info('orders') WHERE name='delivery_time_mins'",
+        "sql":   "ALTER TABLE orders ADD COLUMN delivery_time_mins INTEGER DEFAULT 10",
+        "label": "orders.delivery_time_mins"
+    },
+    # Add delivery_boy_lat to orders
+    {
+        "check": "SELECT COUNT(*) FROM pragma_table_info('orders') WHERE name='delivery_boy_lat'",
+        "sql":   "ALTER TABLE orders ADD COLUMN delivery_boy_lat REAL",
+        "label": "orders.delivery_boy_lat"
+    },
+    # Add delivery_boy_lng to orders
+    {
+        "check": "SELECT COUNT(*) FROM pragma_table_info('orders') WHERE name='delivery_boy_lng'",
+        "sql":   "ALTER TABLE orders ADD COLUMN delivery_boy_lng REAL",
+        "label": "orders.delivery_boy_lng"
+    },
 ]
 
 def run_migrations():

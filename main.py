@@ -18,8 +18,11 @@ from data.settings_manager import load_settings, save_settings, get_effective_ge
 
 class SettingsUpdate(BaseModel):
     gemini_api_key: Optional[str] = None
+    google_maps_api_key: Optional[str] = None
     ai_verification_enabled: Optional[bool] = None
     store_upi_id: Optional[str] = None
+    delivery_agent_phone: Optional[str] = None
+    show_agent_phone_to_customer: Optional[bool] = None
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -76,7 +79,10 @@ def sync_orders_to_file(db: Session):
                 "phone_number": order.phone_number,
                 "ai_forensics_json": order.ai_forensics_json,
                 "delivery_lat": order.delivery_lat,
-                "delivery_lng": order.delivery_lng
+                "delivery_lng": order.delivery_lng,
+                "delivery_time_mins": order.delivery_time_mins,
+                "delivery_boy_lat": order.delivery_boy_lat,
+                "delivery_boy_lng": order.delivery_boy_lng
             })
         with open("orders.json", "w", encoding="utf-8") as f:
             json.dump(orders_list, f, indent=4, ensure_ascii=False)
@@ -215,17 +221,32 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 @app.get("/api/settings")
 def get_settings():
     settings = load_settings()
-    masked_key = ""
-    raw_key = settings.get("gemini_api_key", "")
-    if raw_key:
-        if len(raw_key) > 8:
-            masked_key = f"{raw_key[:4]}...{raw_key[-4:]}"
+    
+    # Mask Gemini API Key
+    masked_gemini_key = ""
+    raw_gemini_key = settings.get("gemini_api_key", "")
+    if raw_gemini_key:
+        if len(raw_gemini_key) > 8:
+            masked_gemini_key = f"{raw_gemini_key[:4]}...{raw_gemini_key[-4:]}"
         else:
-            masked_key = "****"
+            masked_gemini_key = "****"
+            
+    # Mask Google Maps API Key
+    masked_maps_key = ""
+    raw_maps_key = settings.get("google_maps_api_key", "")
+    if raw_maps_key:
+        if len(raw_maps_key) > 8:
+            masked_maps_key = f"{raw_maps_key[:4]}...{raw_maps_key[-4:]}"
+        else:
+            masked_maps_key = "****"
+            
     return {
-        "gemini_api_key": masked_key,
+        "gemini_api_key": masked_gemini_key,
+        "google_maps_api_key": masked_maps_key,
         "ai_verification_enabled": settings.get("ai_verification_enabled", True),
-        "store_upi_id": settings.get("store_upi_id", "9078445116@ybl")
+        "store_upi_id": settings.get("store_upi_id", "9078445116@ybl"),
+        "delivery_agent_phone": settings.get("delivery_agent_phone", ""),
+        "show_agent_phone_to_customer": settings.get("show_agent_phone_to_customer", True)
     }
 
 @app.post("/api/settings")
@@ -240,12 +261,16 @@ def update_settings(settings_data: SettingsUpdate):
 def read_home(request:Request , db:Session = Depends(get_db)):
     result = db.execute(select(models.Product))
     products_form_db = result.scalars().all()
+    settings = load_settings()
     return templates.TemplateResponse(
         request=request,          
         name="home.html",         
         context={                 
             "shop_name": "Maa Bankeswari Rice Store", 
-            "products": products_form_db
+            "products": products_form_db,
+            "google_maps_api_key": settings.get("google_maps_api_key", ""),
+            "delivery_agent_phone": settings.get("delivery_agent_phone", ""),
+            "show_agent_phone_to_customer": settings.get("show_agent_phone_to_customer", True)
         }
     )
 
@@ -701,7 +726,10 @@ def create_new_order(order_data: OrderCreate, db: Session = Depends(get_db)):
         phone_number=order_data.phone_number,
         ai_forensics_json=ai_forensics_json_str,
         delivery_lat=order_data.delivery_lat,
-        delivery_lng=order_data.delivery_lng
+        delivery_lng=order_data.delivery_lng,
+        delivery_time_mins=order_data.delivery_time_mins,
+        delivery_boy_lat=order_data.delivery_boy_lat,
+        delivery_boy_lng=order_data.delivery_boy_lng
     )
     db.add(new_order)
     db.commit()
@@ -793,6 +821,7 @@ def get_user_orders(user_id: int, db: Session = Depends(get_db)):
 
 class StatusUpdate(BaseModel):
     order_status: str
+    delivery_time_mins: Optional[int] = None
 
 
 @app.put("/api/orders/{order_id}/status", response_model=OrderResponse)
@@ -804,13 +833,16 @@ def update_order_status(order_id: int, status_data: StatusUpdate, db: Session = 
         raise HTTPException(status_code=404, detail="Order not found!")
         
     order.order_status = status_data.order_status
+    if status_data.delivery_time_mins is not None:
+        order.delivery_time_mins = status_data.delivery_time_mins
+        
     db.commit()
     db.refresh(order)
     
     # Sync to JSON
     sync_orders_to_file(db)
     
-    print(f"[ORDER STATUS UPDATED] (ID: {order.id}) to {order.order_status}")
+    print(f"[ORDER STATUS UPDATED] (ID: {order.id}) to {order.order_status} (Delivery Time: {order.delivery_time_mins} mins)")
     return order
 
 
@@ -839,10 +871,16 @@ def upload_receipt(file: UploadFile = File(...)):
 
 @app.get("/admin", response_class=HTMLResponse)
 def get_admin_dashboard(request: Request):
+    settings = load_settings()
     return templates.TemplateResponse(
         request=request,
         name="admin.html",
-        context={"shop_name": "Maa Bankeswari Rice Store - Admin Dashboard"}
+        context={
+            "shop_name": "Maa Bankeswari Rice Store - Admin Dashboard",
+            "google_maps_api_key": settings.get("google_maps_api_key", ""),
+            "delivery_agent_phone": settings.get("delivery_agent_phone", ""),
+            "show_agent_phone_to_customer": settings.get("show_agent_phone_to_customer", True)
+        }
     )
 
 
@@ -935,6 +973,77 @@ def chatbot_endpoint(chat_input: ChatbotInput, db: Session = Depends(get_db)):
     except Exception as e:
         print(f"[CHATBOT API ERROR]: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+class DriverLocationUpdate(BaseModel):
+    lat: float
+    lng: float
+
+@app.post("/api/orders/{order_id}/delivery-agent/location")
+def update_driver_location(order_id: int, loc: DriverLocationUpdate, db: Session = Depends(get_db)):
+    result = db.execute(select(models.Order).where(models.Order.id == order_id))
+    order = result.scalars().first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        
+    order.delivery_boy_lat = loc.lat
+    order.delivery_boy_lng = loc.lng
+    db.commit()
+    db.refresh(order)
+    
+    # Sync to JSON file
+    sync_orders_to_file(db)
+    return {"message": "Location updated successfully"}
+
+@app.get("/api/orders/{order_id}/tracking")
+def get_order_tracking(order_id: int, db: Session = Depends(get_db)):
+    result = db.execute(select(models.Order).where(models.Order.id == order_id))
+    order = result.scalars().first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        
+    settings = load_settings()
+    show_phone = settings.get("show_agent_phone_to_customer", True)
+    driver_phone = settings.get("delivery_agent_phone", "") if show_phone else ""
+    
+    return {
+        "order_id": order.id,
+        "order_status": order.order_status,
+        "delivery_address": order.delivery_address,
+        "delivery_time_mins": order.delivery_time_mins,
+        "created_at": order.created_at,
+        "delivery_lat": order.delivery_lat,
+        "delivery_lng": order.delivery_lng,
+        "delivery_boy_lat": order.delivery_boy_lat,
+        "delivery_boy_lng": order.delivery_boy_lng,
+        "driver_phone": driver_phone,
+        "distance_km": order.distance_km,
+        "total_price": order.total_price
+    }
+
+@app.get("/orders/{order_id}/delivery-agent", response_class=HTMLResponse)
+def get_delivery_agent_view(order_id: int, request: Request, db: Session = Depends(get_db)):
+    result = db.execute(select(models.Order).where(models.Order.id == order_id))
+    order = result.scalars().first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        
+    settings = load_settings()
+    # Serialize items so the delivery agent can see them easily
+    items = []
+    try:
+        items = json.loads(order.items_json) if order.items_json else []
+    except Exception:
+        pass
+        
+    return templates.TemplateResponse(
+        request=request,
+        name="delivery_agent.html",
+        context={
+            "order": order,
+            "items": items,
+            "google_maps_api_key": settings.get("google_maps_api_key", "")
+        }
+    )
 
 
 

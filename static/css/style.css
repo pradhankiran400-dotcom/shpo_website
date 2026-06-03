@@ -1923,3 +1923,225 @@ html.dark-theme .typing-indicator-bubble {
 html.dark-theme .typing-indicator-bubble span {
     background-color: var(--text-medium) !important;
 }
+
+/* ----------------------------------------------------
+   HERO SLIDESHOW CAROUSEL
+   ---------------------------------------------------- */
+.carousel-container {
+    position: relative;
+    overflow: hidden;
+    min-height: 380px;
+    padding: 0 !important; /* Overrides default hero padding */
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    margin-bottom: 48px;
+}
+
+.carousel-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    padding: 60px 80px;
+    z-index: 1;
+}
+
+@media (max-width: 768px) {
+    .carousel-slide {
+        padding: 40px 24px;
+        text-align: center;
+    }
+}
+
+.carousel-slide.active {
+    opacity: 1;
+    visibility: visible;
+    z-index: 2;
+}
+
+/* Entrance Micro-animations */
+.carousel-slide .hero-subtitle {
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s, opacity 0.6s ease 0.2s;
+}
+
+.carousel-slide .hero-title {
+    transform: translateY(25px);
+    opacity: 0;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s, opacity 0.6s ease 0.3s;
+}
+
+.carousel-slide .hero-description {
+    transform: translateY(30px);
+    opacity: 0;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s, opacity 0.6s ease 0.4s;
+}
+
+.carousel-slide .hero-features {
+    transform: translateY(35px);
+    opacity: 0;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s, opacity 0.6s ease 0.5s;
+}
+
+.carousel-slide.active .hero-subtitle,
+.carousel-slide.active .hero-title,
+.carousel-slide.active .hero-description,
+.carousel-slide.active .hero-features {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* Navigation Buttons */
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: var(--transition-smooth);
+}
+
+.carousel-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary-light);
+    color: var(--accent);
+    transform: translateY(-50%) scale(1.05);
+}
+
+.carousel-btn i,
+.carousel-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.prev-btn {
+    left: 24px;
+}
+
+.next-btn {
+    right: 24px;
+}
+
+@media (max-width: 600px) {
+    .carousel-btn {
+        width: 36px;
+        height: 36px;
+    }
+    .prev-btn {
+        left: 12px;
+    }
+    .next-btn {
+        right: 12px;
+    }
+}
+
+/* Pagination Dots */
+.carousel-dots {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.carousel-dots .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.carousel-dots .dot:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.carousel-dots .dot.active {
+    background: var(--accent);
+    width: 24px;
+    border-radius: var(--radius-xl);
+}
+
+/* ----------------------------------------------------
+   CHECKOUT SEARCH SUGGESTIONS DROPDOWN
+   ---------------------------------------------------- */
+#checkout-search-suggestions {
+    background: var(--bg-card);
+    border: 1.5px solid rgba(27, 67, 50, 0.15);
+    border-top: none;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    box-shadow: var(--shadow-md);
+}
+
+.search-suggestion-item {
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    color: var(--text-dark);
+    cursor: pointer;
+    border-bottom: 1px solid rgba(27, 67, 50, 0.06);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition-fast);
+}
+
+.search-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.search-suggestion-item:hover, 
+.search-suggestion-item.active-suggestion {
+    background-color: var(--primary-ultra-light);
+    color: var(--primary-dark);
+}
+
+/* Dark Mode Overrides */
+html.dark-theme #checkout-search-suggestions {
+    background-color: #1c221e;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark-theme .search-suggestion-item {
+    color: var(--text-dark);
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+html.dark-theme .search-suggestion-item:hover,
+html.dark-theme .search-suggestion-item.active-suggestion {
+    background-color: var(--primary-ultra-light);
+    color: #121614;
+}
+
+html.dark-theme .carousel-btn {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark-theme .carousel-btn:hover {
+    background: var(--primary);
+    color: var(--accent);
+}

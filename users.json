@@ -89,5 +89,12 @@
         "email": "bishnu123@gmail.com",
         "fullname": "bishnu priya pradhan",
         "phone_number": "9078445116"
+    },
+    {
+        "id": 14,
+        "username": "testuser",
+        "email": "test@example.com",
+        "fullname": "Test User",
+        "phone_number": "9078445117"
     }
 ]

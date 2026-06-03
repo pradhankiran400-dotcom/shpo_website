@@ -21,7 +21,12 @@
         "order_status": "Rejected",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 2,
@@ -45,7 +50,12 @@
         "order_status": "Rejected",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 3,
@@ -75,7 +85,12 @@
         "order_status": "Rejected",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 4,
@@ -105,7 +120,12 @@
         "order_status": "Rejected",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 5,
@@ -135,7 +155,12 @@
         "order_status": "Rejected",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 6,
@@ -165,7 +190,12 @@
         "order_status": "Rejected",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 7,
@@ -189,7 +219,12 @@
         "order_status": "Rejected",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 8,
@@ -219,7 +254,12 @@
         "order_status": "Rejected",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 9,
@@ -243,7 +283,12 @@
         "order_status": "Rejected",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 10,
@@ -273,7 +318,12 @@
         "order_status": "Rejected",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 11,
@@ -297,7 +347,12 @@
         "order_status": "Rejected",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 12,
@@ -327,7 +382,12 @@
         "order_status": "Approved",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 13,
@@ -351,7 +411,12 @@
         "order_status": "Approved",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 14,
@@ -381,7 +446,12 @@
         "order_status": "Approved",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 15,
@@ -404,7 +474,12 @@
         "order_status": "Approved",
         "receipt_image_url": "/static/uploads/receipts/test_receipt.png",
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 16,
@@ -436,7 +511,12 @@
         "order_status": "Approved",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 17,
@@ -459,7 +539,12 @@
         "order_status": "Approved",
         "receipt_image_url": "/static/uploads/receipts/test_receipt.png",
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 18,
@@ -482,7 +567,12 @@
         "order_status": "Approved",
         "receipt_image_url": "/static/uploads/receipts/test_receipt.png",
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 19,
@@ -505,7 +595,12 @@
         "order_status": "Approved",
         "receipt_image_url": "/static/uploads/receipts/test_receipt.png",
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 20,
@@ -529,7 +624,12 @@
         "order_status": "Rejected",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 21,
@@ -553,7 +653,12 @@
         "order_status": "Rejected",
         "receipt_image_url": "/static/uploads/receipts/1780245669_Screenshot_2026-05-31_221100.png",
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 22,
@@ -577,7 +682,12 @@
         "order_status": "Approved",
         "receipt_image_url": "/static/uploads/receipts/1780246286_Screenshot_2026-05-31_221100.png",
         "phone_number": "9078445116",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 23,
@@ -600,7 +710,12 @@
         "order_status": "Approved",
         "receipt_image_url": "/static/uploads/receipts/1780246286_Screenshot_2026-05-31_221100.png",
         "phone_number": "9078445116",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 24,
@@ -624,7 +739,12 @@
         "order_status": "Rejected",
         "receipt_image_url": "/static/uploads/receipts/1780247518_Screenshot_2026-05-31_221100.png",
         "phone_number": "9078445116",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 25,
@@ -648,7 +768,12 @@
         "order_status": "Rejected",
         "receipt_image_url": "/static/uploads/receipts/1780251032_Gemini_Generated_Image_90nieh90nieh90ni.png",
         "phone_number": "9078445116",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 26,
@@ -672,7 +797,12 @@
         "order_status": "Rejected",
         "receipt_image_url": "/static/uploads/receipts/1780286192_Gemini_Generated_Image_90nieh90nieh90ni.png",
         "phone_number": "9078445116",
-        "ai_forensics_json": "{\"is_authentic\": true, \"confidence_score\": 1.0, \"payment_app\": \"Local OCR Verified\", \"detected_amount\": 103.7, \"detected_utr\": \"Unknown UTR\", \"detected_timestamp\": \"2026-06-01 09:26:51\", \"receiver_upi_id\": \"N/A\", \"tampering_indicators\": [], \"forensic_analysis_details\": \"Verified via standard local OCR. Configure Gemini API key for visual forensics scanner.\"}"
+        "ai_forensics_json": "{\"is_authentic\": true, \"confidence_score\": 1.0, \"payment_app\": \"Local OCR Verified\", \"detected_amount\": 103.7, \"detected_utr\": \"Unknown UTR\", \"detected_timestamp\": \"2026-06-01 09:26:51\", \"receiver_upi_id\": \"N/A\", \"tampering_indicators\": [], \"forensic_analysis_details\": \"Verified via standard local OCR. Configure Gemini API key for visual forensics scanner.\"}",
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 27,
@@ -696,7 +826,12 @@
         "order_status": "Approved",
         "receipt_image_url": "/static/uploads/receipts/1780286440_Gemini_Generated_Image_90nieh90nieh90ni.png",
         "phone_number": "9078445116",
-        "ai_forensics_json": "{\"is_authentic\": true, \"confidence_score\": 1.0, \"payment_app\": \"Local OCR Verified\", \"detected_amount\": 103.7, \"detected_utr\": \"Unknown UTR\", \"detected_timestamp\": \"2026-06-01 09:30:48\", \"receiver_upi_id\": \"N/A\", \"tampering_indicators\": [], \"forensic_analysis_details\": \"Verified via standard local OCR. Configure Gemini API key for visual forensics scanner.\"}"
+        "ai_forensics_json": "{\"is_authentic\": true, \"confidence_score\": 1.0, \"payment_app\": \"Local OCR Verified\", \"detected_amount\": 103.7, \"detected_utr\": \"Unknown UTR\", \"detected_timestamp\": \"2026-06-01 09:30:48\", \"receiver_upi_id\": \"N/A\", \"tampering_indicators\": [], \"forensic_analysis_details\": \"Verified via standard local OCR. Configure Gemini API key for visual forensics scanner.\"}",
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     },
     {
         "id": 28,
@@ -744,6 +879,193 @@
         "order_status": "Approved",
         "receipt_image_url": null,
         "phone_number": "",
-        "ai_forensics_json": null
+        "ai_forensics_json": null,
+        "delivery_lat": null,
+        "delivery_lng": null,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
+    },
+    {
+        "id": 29,
+        "user_id": 9,
+        "items": [
+            {
+                "id": 3,
+                "name": "Premium Toor Dal",
+                "price": 160,
+                "image": "/media/profile_pics/premium_toor_dal.png",
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 163.28,
+        "created_at": "2026-06-03 12:17:25",
+        "delivery_address": "Regional Institute of Education, Sachivalaya Marg, Unit-9, Ward 29, South East Zone, Bhubaneswar Municipal Corporation, Bhubaneswar (M.Corp.), Khordha, Odisha, 751022, India",
+        "distance_km": 1.64,
+        "delivery_charge": 3.28,
+        "payment_method": "COD",
+        "order_status": "Rejected",
+        "receipt_image_url": null,
+        "phone_number": "",
+        "ai_forensics_json": null,
+        "delivery_lat": 20.286882372647423,
+        "delivery_lng": 85.8302610862829,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
+    },
+    {
+        "id": 30,
+        "user_id": 9,
+        "items": [
+            {
+                "id": 1,
+                "name": "Dawat Rice",
+                "price": 95,
+                "image": "/media/profile_pics/dawat.png",
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 115.0,
+        "created_at": "2026-06-03 12:25:42",
+        "delivery_address": "Institute of Minerals and Materials Technology (IMMT), Acharya vihar Flyover, Acharya Vihar Square, Ward 12, North Zone, Bhubaneswar Municipal Corporation, Bhubaneswar (M.Corp.), Khordha, Odisha, 751022, India",
+        "distance_km": 10.0,
+        "delivery_charge": 20.0,
+        "payment_method": "COD",
+        "order_status": "Approved",
+        "receipt_image_url": null,
+        "phone_number": "",
+        "ai_forensics_json": null,
+        "delivery_lat": 20.299811172608486,
+        "delivery_lng": 85.82991793554488,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
+    },
+    {
+        "id": 31,
+        "user_id": 9,
+        "items": [
+            {
+                "id": 3,
+                "name": "Premium Toor Dal",
+                "price": 160,
+                "image": "/media/profile_pics/premium_toor_dal.png",
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 181.22,
+        "created_at": "2026-06-03 12:27:21",
+        "delivery_address": "Chandaka, Khordha, Odisha, India",
+        "distance_km": 10.61,
+        "delivery_charge": 21.22,
+        "payment_method": "COD",
+        "order_status": "Approved",
+        "receipt_image_url": null,
+        "phone_number": "",
+        "ai_forensics_json": null,
+        "delivery_lat": 20.3218354,
+        "delivery_lng": 85.7192517,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
+    },
+    {
+        "id": 32,
+        "user_id": 13,
+        "items": [
+            {
+                "id": 2,
+                "name": "Organic Moog Dal",
+                "price": 100,
+                "image": "/media/profile_pics/organic_moong_dal.png",
+                "unit": "kg",
+                "quantity": 1
+            },
+            {
+                "id": 1,
+                "name": "Dawat Rice",
+                "price": 95,
+                "image": "/media/profile_pics/dawat.png",
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 204.8,
+        "created_at": "2026-06-03 12:40:28",
+        "delivery_address": "sahid nagar,bhubaneswar",
+        "distance_km": 4.9,
+        "delivery_charge": 9.8,
+        "payment_method": "COD",
+        "order_status": "Approved",
+        "receipt_image_url": null,
+        "phone_number": "9078445116",
+        "ai_forensics_json": null,
+        "delivery_lat": 28.6766619,
+        "delivery_lng": 77.3339154,
+        "delivery_time_mins": 20,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
+    },
+    {
+        "id": 33,
+        "user_id": 13,
+        "items": [
+            {
+                "id": 3,
+                "name": "Premium Toor Dal",
+                "price": 160,
+                "image": "/media/profile_pics/premium_toor_dal.png",
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 166.48,
+        "created_at": "2026-06-03 12:56:28",
+        "delivery_address": "Bharatpur Forest-Lungs of Bhubaneswar, South West Zone, Bhubaneswar Municipal Corporation, Bhubaneswar (M.Corp.), Khordha, Odisha, India",
+        "distance_km": 3.24,
+        "delivery_charge": 6.48,
+        "payment_method": "COD",
+        "order_status": "Approved",
+        "receipt_image_url": null,
+        "phone_number": "9078445116",
+        "ai_forensics_json": null,
+        "delivery_lat": 20.3134805,
+        "delivery_lng": 85.7933239,
+        "delivery_time_mins": 20,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
+    },
+    {
+        "id": 34,
+        "user_id": 13,
+        "items": [
+            {
+                "id": 4,
+                "name": "Superfine Daily Rice",
+                "price": 52,
+                "image": "/media/profile_pics/sona_masoori_rice.png",
+                "unit": "kg",
+                "quantity": 1
+            }
+        ],
+        "total_price": 54.9,
+        "created_at": "2026-06-03 13:22:51",
+        "delivery_address": "Institute of Minerals and Materials Technology (IMMT), Nandankanan Road, Ward 12, North Zone, Bhubaneswar Municipal Corporation, Bhubaneswar (M.Corp.), Khordha, Odisha, 751013, India",
+        "distance_km": 1.45,
+        "delivery_charge": 2.9,
+        "payment_method": "COD",
+        "order_status": "Approved",
+        "receipt_image_url": null,
+        "phone_number": "9078445116",
+        "ai_forensics_json": null,
+        "delivery_lat": 20.298042179985238,
+        "delivery_lng": 85.8300037232294,
+        "delivery_time_mins": 10,
+        "delivery_boy_lat": null,
+        "delivery_boy_lng": null
     }
 ]

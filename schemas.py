@@ -61,6 +61,9 @@ class OrderCreate(BaseModel):
     ai_forensics_json: Optional[str] = None
     delivery_lat: Optional[float] = None
     delivery_lng: Optional[float] = None
+    delivery_time_mins: Optional[int] = 10
+    delivery_boy_lat: Optional[float] = None
+    delivery_boy_lng: Optional[float] = None
 
 class OrderResponse(OrderCreate):
     id: int

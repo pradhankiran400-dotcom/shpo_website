@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maa Bankeswari - Delivery Agent Portal</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Leaflet Resources for Fallback -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        :root {
+            --primary: #1b4332;
+            --primary-light: #2d6a4f;
+            --primary-ultra-light: #e8f5e9;
+            --primary-dark: #081c15;
+            --accent: #d4af37;
+            --bg-base: #fbf9f4;
+            --bg-card: #ffffff;
+            --text-dark: #1e2522;
+            --text-medium: #4a5450;
+            --text-light: #7e8b85;
+            --success: #2e7d32;
+            --danger: #d32f2f;
+            --radius-md: 16px;
+            --radius-sm: 8px;
+            --shadow-md: 0 12px 32px rgba(27, 67, 50, 0.08);
+            --font-body: 'Outfit', sans-serif;
+            --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Dark mode support */
+        html.dark-theme {
+            --bg-base: #0f1311;
+            --bg-card: #151a17;
+            --text-dark: #f0f3f1;
+            --text-medium: #c0c6c2;
+            --text-light: #8d9590;
+            --border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-base);
+            color: var(--text-dark);
+            padding: 16px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .portal-container {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        header {
+            text-align: center;
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        header h1 {
+            font-size: 1.35rem;
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        html.dark-theme header h1 {
+            color: var(--accent);
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(27,67,50,0.06);
+        }
+
+        .order-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-bottom: 1px dashed rgba(27,67,50,0.08);
+            padding-bottom: 10px;
+        }
+
+        .order-id {
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--primary-light);
+        }
+
+        .status-badge {
+            background-color: var(--primary-ultra-light);
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .address-box {
+            font-size: 0.95rem;
+            line-height: 1.45;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+            background: rgba(27,67,50,0.02);
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--accent);
+        }
+
+        .items-list {
+            margin-bottom: 16px;
+            font-size: 0.88rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-medium);
+        }
+
+        .btn {
+            width: 100%;
+            height: 48px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-body);
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(27,67,50,0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+            box-shadow: 0 4px 12px rgba(46,125,50,0.2);
+        }
+
+        .btn-success:hover {
+            background-color: #1b5e20;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1.5px solid var(--primary-light);
+            color: var(--primary-light);
+        }
+
+        html.dark-theme .btn-outline {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-sharing {
+            background-color: #e53e3e;
+            color: white;
+            box-shadow: 0 4px 12px rgba(229,62,62,0.2);
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.98); box-shadow: 0 0 0 4px rgba(229,62,62,0.3); }
+            100% { transform: scale(1); }
+        }
+
+        #map {
+            width: 100%;
+            height: 250px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(27,67,50,0.1);
+            margin-bottom: 16px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            background: rgba(8, 28, 21, 0.95);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 10000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="portal-container">
+        <header>
+            <img src="/static/image/logo.png" alt="Maa Bankeswari Logo" style="width: 32px; height: 32px; border-radius: 50%;">
+            <h1>Maa Bankeswari Store</h1>
+        </header>
+
+        <!-- Order Card Info -->
+        <div class="card">
+            <div class="order-meta-row">
+                <span class="order-id">Order #{{ order.id }}</span>
+                <span class="status-badge" id="order-status-val">{{ order.order_status }}</span>
+            </div>
+
+            <div class="section-title">🏠 Delivery Destination</div>
+            <div class="address-box">
+                {{ order.delivery_address or 'Store Pickup' }}
+            </div>
+
+            <div class="section-title">🌾 Items to Deliver</div>
+            <div class="items-list">
+                {% for item in items %}
+                <div class="item-row">
+                    <span>{{ item.name }} <strong>x{{ item.quantity }}</strong></span>
+                    <span>₹{{ (item.price * item.quantity)|round(2) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Map Routing -->
+            <div class="section-title">🗺️ Road Navigation Route</div>
+            <div id="map"></div>
+
+            <!-- GPS Control Button -->
+            <button id="toggle-gps-btn" class="btn btn-primary" style="margin-bottom: 10px;">
+                <i data-lucide="map-pin"></i> Start Sharing GPS Location
+            </button>
+
+            <!-- Action buttons -->
+            <div style="display: flex; gap: 10px;">
+                <a href="tel:{{ order.phone_number }}" class="btn btn-outline" style="text-decoration: none; flex: 1;">
+                    <i data-lucide="phone"></i> Call User
+                </a>
+                <button id="complete-btn" class="btn btn-success" style="flex: 1.2;">
+                    <i data-lucide="check-circle-2"></i> Mark Delivered
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast-notify" class="toast">
+        <span id="toast-message">GPS location sharing active</span>
+    </div>
+
+    <script>
+        // Setup immediate Dark Mode from Local Storage
+        if (localStorage.getItem("theme") === "dark") {
+            document.documentElement.classList.add("dark-theme");
+        }
+
+        const ORDER_ID = {{ order.id }};
+        const CUSTOMER_LAT = {{ order.delivery_lat or 20.29424 }};
+        const CUSTOMER_LNG = {{ order.delivery_lng or 85.81667 }};
+        const STORE_LAT = 20.29424;
+        const STORE_LNG = 85.81667;
+        const GOOGLE_MAPS_API_KEY = "{{ google_maps_api_key }}";
+
+        let gpsWatchId = null;
+        let map = null;
+        let routePolyline = null;
+        let driverMarker = null;
+        let isSharing = false;
+
+        const toggleGpsBtn = document.getElementById("toggle-gps-btn");
+        const completeBtn = document.getElementById("complete-btn");
+
+        // Toast utility
+        let toastTimeout;
+        function showToast(msg) {
+            const toast = document.getElementById("toast-notify");
+            const messageEl = document.getElementById("toast-message");
+            messageEl.innerText = msg;
+            toast.classList.add("active");
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove("active");
+            }, 3000);
+        }
+
+        // Initialize maps dynamically
+        function initPortalMap(currentLat, currentLng) {
+            const startLat = currentLat || STORE_LAT;
+            const startLng = currentLng || STORE_LNG;
+            
+            const isGoogleMaps = (window.google && window.google.maps && GOOGLE_MAPS_API_KEY);
+
+            if (isGoogleMaps) {
+                try {
+                    map = new google.maps.Map(document.getElementById('map'), {
+                        zoom: 14,
+                        center: { lat: startLat, lng: startLng },
+                        mapTypeControl: false,
+                        streetViewControl: false,
+                        fullscreenControl: false
+                    });
+
+                    const directionsService = new google.maps.DirectionsService();
+                    const directionsRenderer = new google.maps.DirectionsRenderer({
+                        map: map,
+                        suppressMarkers: true,
+                        polylineOptions: { strokeColor: '#1b4332', strokeWeight: 5 }
+                    });
+
+                    // Store Marker
+                    new google.maps.Marker({
+                        position: { lat: STORE_LAT, lng: STORE_LNG },
+                        map: map,
+                        label: "🌾",
+                        title: "Store"
+                    });
+
+                    // User Marker
+                    new google.maps.Marker({
+                        position: { lat: CUSTOMER_LAT, lng: CUSTOMER_LNG },
+                        map: map,
+                        label: "🏠",
+                        title: "Destination"
+                    });
+
+                    // Driver marker
+                    driverMarker = new google.maps.Marker({
+                        position: { lat: startLat, lng: startLng },
+                        map: map,
+                        label: "🛵",
+                        title: "Your Location"
+                    });
+
+                    // Draw Route function
+                    window.updateNavigationRoute = (lat, lng) => {
+                        const originPos = { lat: lat, lng: lng };
+                        driverMarker.setPosition(originPos);
+                        
+                        directionsService.route({
+                            origin: originPos,
+                            destination: { lat: CUSTOMER_LAT, lng: CUSTOMER_LNG },
+                            travelMode: google.maps.TravelMode.DRIVING
+                        }, (result, status) => {
+                            if (status === 'OK') {
+                                directionsRenderer.setDirections(result);
+                            }
+                        });
+                    };
+
+                    // Initial route draw
+                    window.updateNavigationRoute(startLat, startLng);
+                    return;
+                } catch (e) {
+                    console.error("Google Maps failed to load, falling back to Leaflet.", e);
+                }
+            }
+
+            // Fallback Leaflet Map
+            try {
+                map = L.map('map', { zoomControl: false, attributionControl: false }).setView([startLat, startLng], 14);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+                const storeIcon = L.divIcon({
+                    html: `<div style="background-color: var(--primary); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; border: 1.5px solid var(--accent);">🌾</div>`,
+                    iconSize: [24, 24], iconAnchor: [12, 12]
+                });
+
+                const customerIcon = L.divIcon({
+                    html: `<div style="background-color: var(--accent); color: var(--primary-dark); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; border: 1.5px solid var(--primary);">🏠</div>`,
+                    iconSize: [24, 24], iconAnchor: [12, 12]
+                });
+
+                const driverIcon = L.divIcon({
+                    html: `<div style="background-color: var(--primary-light); color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; border: 1.5px solid white;">🛵</div>`,
+                    iconSize: [26, 26], iconAnchor: [13, 13]
+                });
+
+                L.marker([STORE_LAT, STORE_LNG], { icon: storeIcon }).addTo(map);
+                L.marker([CUSTOMER_LAT, CUSTOMER_LNG], { icon: customerIcon }).addTo(map);
+                driverMarker = L.marker([startLat, startLng], { icon: driverIcon }).addTo(map);
+
+                window.updateNavigationRoute = (lat, lng) => {
+                    driverMarker.setLatLng([lat, lng]);
+                    
+                    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${lng},${lat};${CUSTOMER_LNG},${CUSTOMER_LAT}?overview=full&geometries=geojson`;
+                    fetch(osrmUrl)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.routes && data.routes.length > 0) {
+                            const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                            if (routePolyline) {
+                                routePolyline.setLatLngs(coords);
+                            } else {
+                                routePolyline = L.polyline(coords, { color: '#1b4332', weight: 4 }).addTo(map);
+                            }
+                            map.fitBounds(routePolyline.getBounds(), { padding: [20, 20] });
+                        }
+                    });
+                };
+
+                window.updateNavigationRoute(startLat, startLng);
+            } catch (err) {
+                console.error("Map initialization failed:", err);
+            }
+        }
+
+        // Send GPS coordinate updates to server
+        function postLocationUpdate(lat, lng) {
+            fetch(`/api/orders/${ORDER_ID}/delivery-agent/location`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ lat: lat, lng: lng })
+            })
+            .then(res => {
+                if (!res.ok) console.error("Failed to post driver location to backend");
+            })
+            .catch(err => console.error("Network error updating driver GPS coordinates:", err));
+        }
+
+        // Toggle GPS tracking mechanism
+        function startTracking() {
+            if (!navigator.geolocation) {
+                showToast("Your device does not support GPS Geolocation tracking!");
+                return;
+            }
+
+            isSharing = true;
+            toggleGpsBtn.innerHTML = `<i data-lucide="stop-circle"></i> Sharing Location (Click to stop)`;
+            toggleGpsBtn.className = "btn btn-sharing";
+            if (window.lucide) window.lucide.createIcons();
+
+            showToast("GPS Location updates active! 📡");
+
+            gpsWatchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+
+                    // Update local navigation map
+                    if (window.updateNavigationRoute) {
+                        window.updateNavigationRoute(lat, lng);
+                    }
+
+                    // Update server coordinates
+                    postLocationUpdate(lat, lng);
+                },
+                (err) => {
+                    console.error("GPS Watch Error:", err);
+                    showToast("GPS location permission denied or timed out!");
+                    stopTracking();
+                },
+                { enableHighAccuracy: true, timeout: 6000 }
+            );
+        }
+
+        function stopTracking() {
+            isSharing = false;
+            if (gpsWatchId !== null) {
+                navigator.geolocation.clearWatch(gpsWatchId);
+                gpsWatchId = null;
+            }
+            toggleGpsBtn.innerHTML = `<i data-lucide="map-pin"></i> Start Sharing GPS Location`;
+            toggleGpsBtn.className = "btn btn-primary";
+            if (window.lucide) window.lucide.createIcons();
+            showToast("GPS Location sharing paused.");
+        }
+
+        if (toggleGpsBtn) {
+            toggleGpsBtn.addEventListener("click", () => {
+                if (isSharing) {
+                    stopTracking();
+                } else {
+                    startTracking();
+                }
+            });
+        }
+
+        // Mark order as delivered click handler
+        if (completeBtn) {
+            completeBtn.addEventListener("click", () => {
+                const conf = confirm("Are you sure this order has been successfully delivered to the customer?");
+                if (!conf) return;
+
+                fetch(`/api/orders/${ORDER_ID}/status`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ order_status: "Delivered" })
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error("Deliver status update failed");
+                    return res.json();
+                })
+                .then(order => {
+                    showToast("Order marked DELIVERED successfully! 🎉");
+                    document.getElementById("order-status-val").innerText = "Delivered";
+                    stopTracking();
+                    setTimeout(() => {
+                        alert("Delivery complete! You can close this portal page.");
+                    }, 800);
+                })
+                .catch(err => {
+                    console.error("Delivery status update failed:", err);
+                    showToast("Failed to update status. Check your connection!");
+                });
+            });
+        }
+
+        // Load Maps SDK dynamically if configured
+        document.addEventListener("DOMContentLoaded", () => {
+            if (window.lucide) window.lucide.createIcons();
+
+            if (GOOGLE_MAPS_API_KEY) {
+                const script = document.createElement("script");
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=geometry`;
+                script.async = true;
+                script.defer = true;
+                script.onload = () => {
+                    initPortalMap();
+                };
+                script.onerror = () => {
+                    console.warn("Google Maps script failed to load. Falling back to Leaflet.");
+                    initPortalMap();
+                };
+                document.head.appendChild(script);
+            } else {
+                initPortalMap();
+            }
+        });
+    </script>
+</body>
+</html>

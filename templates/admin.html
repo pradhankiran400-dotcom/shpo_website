@@ -788,57 +788,85 @@
             </div>
         </section>
 
-        <!-- Gemini AI Security & Forensics Settings Card -->
-        <section id="ai-security-settings-section" style="background: var(--bg-card); border: 1.5px solid rgba(45, 106, 79, 0.15); border-radius: var(--radius-md); padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 16px; transition: var(--transition-normal);">
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 1.5px dashed rgba(27,67,50,0.1); padding-bottom: 14px; margin-bottom: 16px;">
-                <h3 style="font-family: var(--font-heading); color: var(--primary-dark); font-size: 1.3rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 1.6rem;">🛡️</span> Gemini AI Receipt Forensics & Security
-                </h3>
-                <span id="ai-status-indicator" style="font-size: 0.8rem; font-weight: 700; color: var(--text-light); background-color: rgba(0,0,0,0.05); padding: 4px 10px; border-radius: var(--radius-xl); display: inline-flex; align-items: center; gap: 6px;">
-                    <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--text-light); display: inline-block;"></span> Checking Status...
-                </span>
-            </div>
-            
-            <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
-                <!-- Key Input -->
-                <div style="flex: 2; min-width: 280px; position: relative;">
-                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 8px;">🔑 Configure Gemini API Key</label>
-                    <div style="position: relative;">
-                        <input type="password" id="gemini-key-input" placeholder="Enter Gemini API Key (e.g. AIzaSy...)" style="width: 100%; padding: 10px 44px 10px 14px; font-family: var(--font-body); font-size: 0.9rem; border: 1.5px solid rgba(27,67,50,0.15); border-radius: var(--radius-sm); outline: none; transition: var(--transition-fast); background-color: var(--bg-card);">
-                        <button type="button" id="toggle-gemini-key-visibility" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-light); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px;">
-                            <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
-                        </button>
+        <!-- Store Settings Section -->
+        <section id="ai-security-settings-section" style="background: var(--bg-card); border: 1.5px solid rgba(45, 106, 79, 0.15); border-radius: var(--radius-md); padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 16px; transition: var(--transition-normal); display: flex; flex-direction: column; gap: 20px;">
+            <!-- Gemini Settings -->
+            <div>
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 1.5px dashed rgba(27,67,50,0.1); padding-bottom: 10px; margin-bottom: 16px;">
+                    <h3 style="font-family: var(--font-heading); color: var(--primary-dark); font-size: 1.3rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.6rem;">🛡️</span> Gemini AI Receipt Forensics & Security
+                    </h3>
+                    <span id="ai-status-indicator" style="font-size: 0.8rem; font-weight: 700; color: var(--text-light); background-color: rgba(0,0,0,0.05); padding: 4px 10px; border-radius: var(--radius-xl); display: inline-flex; align-items: center; gap: 6px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--text-light); display: inline-block;"></span> Checking Status...
+                    </span>
+                </div>
+                <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 2; min-width: 280px; position: relative;">
+                        <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 8px;">🔑 Configure Gemini API Key</label>
+                        <div style="position: relative;">
+                            <input type="password" id="gemini-key-input" placeholder="Enter Gemini API Key (e.g. AIzaSy...)" style="width: 100%; padding: 10px 44px 10px 14px; font-family: var(--font-body); font-size: 0.9rem; border: 1.5px solid rgba(27,67,50,0.15); border-radius: var(--radius-sm); outline: none; transition: var(--transition-fast); background-color: var(--bg-card);">
+                            <button type="button" id="toggle-gemini-key-visibility" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-light); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px;">
+                                <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div style="flex: 1.5; min-width: 220px;">
+                        <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 8px;">💳 Store Merchant UPI ID</label>
+                        <input type="text" id="store-upi-input" placeholder="e.g. 9078445116@ybl" style="width: 100%; padding: 10px 14px; font-family: var(--font-body); font-size: 0.9rem; border: 1.5px solid rgba(27,67,50,0.15); border-radius: var(--radius-sm); outline: none; transition: var(--transition-fast); background-color: var(--bg-card);">
+                    </div>
+                    <div style="flex: 1.2; min-width: 200px; padding-bottom: 8px;">
+                        <label style="display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: var(--primary-dark); user-select: none;">
+                            <input type="checkbox" id="ai-verification-toggle" checked style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                            Enable Visual Forensics Scan
+                        </label>
                     </div>
                 </div>
+            </div>
 
-                <!-- Store UPI ID Input -->
-                <div style="flex: 1.5; min-width: 220px;">
-                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 8px;">💳 Store Merchant UPI ID</label>
-                    <input type="text" id="store-upi-input" placeholder="e.g. 9078445116@ybl" style="width: 100%; padding: 10px 14px; font-family: var(--font-body); font-size: 0.9rem; border: 1.5px solid rgba(27,67,50,0.15); border-radius: var(--radius-sm); outline: none; transition: var(--transition-fast); background-color: var(--bg-card);">
-                </div>
-                
-                <!-- Toggle -->
-                <div style="flex: 1.2; min-width: 200px; padding-bottom: 8px;">
-                    <label style="display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: var(--primary-dark); user-select: none;">
-                        <input type="checkbox" id="ai-verification-toggle" checked style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
-                        Enable Visual Forensics Scan
-                    </label>
-                </div>
-                
-                <!-- Save Button -->
-                <div style="min-width: 150px;">
-                    <button type="button" id="save-ai-settings-btn" class="btn btn-approve" style="width: 100%; height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 0.85rem;">
-                        <i data-lucide="shield-check" style="width: 16px; height: 16px;"></i> Save Settings
-                    </button>
+            <!-- Google Maps & Delivery Agent Settings -->
+            <div>
+                <h3 style="font-family: var(--font-heading); color: var(--primary-dark); font-size: 1.3rem; font-weight: 800; border-bottom: 1.5px dashed rgba(27,67,50,0.1); padding-bottom: 10px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                    <span>🗺️</span> Google Maps & Live Order Dispatch Settings
+                </h3>
+                <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 2; min-width: 280px; position: relative;">
+                        <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 8px;">🔑 Configure Google Maps API Key</label>
+                        <div style="position: relative;">
+                            <input type="password" id="google-maps-key-input" placeholder="Enter Google Maps API Key (e.g. AIzaSy...)" style="width: 100%; padding: 10px 44px 10px 14px; font-family: var(--font-body); font-size: 0.9rem; border: 1.5px solid rgba(27,67,50,0.15); border-radius: var(--radius-sm); outline: none; transition: var(--transition-fast); background-color: var(--bg-card);">
+                            <button type="button" id="toggle-google-maps-key-visibility" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-light); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px;">
+                                <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div style="flex: 1.5; min-width: 220px;">
+                        <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 8px;">📞 Default Delivery Agent Phone Number</label>
+                        <input type="text" id="delivery-agent-phone-input" placeholder="e.g. +91 9776400523" style="width: 100%; padding: 10px 14px; font-family: var(--font-body); font-size: 0.9rem; border: 1.5px solid rgba(27,67,50,0.15); border-radius: var(--radius-sm); outline: none; transition: var(--transition-fast); background-color: var(--bg-card);">
+                    </div>
+                    <div style="flex: 1.2; min-width: 200px; padding-bottom: 8px;">
+                        <label style="display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: var(--primary-dark); user-select: none;">
+                            <input type="checkbox" id="show-agent-phone-toggle" checked style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                            Show Agent Phone to Customer
+                        </label>
+                    </div>
                 </div>
             </div>
-            <div style="font-size: 0.82rem; color: var(--primary-dark); margin-top: 16px; line-height: 1.5; background-color: var(--primary-ultra-light); border-left: 4px solid var(--accent); padding: 12px 16px; border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); display: flex; gap: 8px; align-items: flex-start;">
-                <span style="font-size: 1.1rem; line-height: 1;">💡</span>
-                <div>
-                    <strong style="color: var(--primary-dark);">How it works:</strong> If enabled, visual receipt forensics are executed automatically. If no API key is specified, the system gracefully falls back to local Python OCR, maintaining zero downtime.
-                </div>
+
+            <!-- Single Save Button for All settings -->
+            <div style="display: flex; justify-content: flex-end; border-top: 1.5px dashed rgba(27,67,50,0.1); padding-top: 16px;">
+                <button type="button" id="save-ai-settings-btn" class="btn btn-approve" style="max-width: 200px; height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 0.85rem; padding: 0 24px;">
+                    <i data-lucide="shield-check" style="width: 16px; height: 16px;"></i> Save All Settings
+                </button>
             </div>
         </section>
+        
+        <!-- Inject script-level Google Maps Key variable -->
+        <script>
+            window.GOOGLE_MAPS_API_KEY = "{{ google_maps_api_key }}";
+        </script>
+        
+        <!-- Load Leaflet inside admin in case of fallback -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 
         <!-- Unified Orders Search & Filter Control Bar -->
@@ -1409,11 +1437,37 @@
                             </div>
                         `).join("");
 
-                        const badgeClass = order.order_status === "Approved" ? "badge-approved" : "badge-rejected";
+                        const isActive = order.order_status === "Approved";
+                        const cardOpacity = isActive ? "1" : "0.8";
+                        const activeBorder = isActive ? "border: 1.5px solid rgba(45, 106, 79, 0.3); box-shadow: var(--shadow-md);" : "";
+                        
+                        let badgeClass = "badge-approved";
+                        if (order.order_status === "Rejected") badgeClass = "badge-rejected";
+                        else if (order.order_status === "Delivered") badgeClass = "badge-approved";
+                        else if (order.order_status === "Pending Approval") badgeClass = "badge-pending";
+                        
                         const statusLabel = order.order_status || "Approved";
 
+                        // Collapsible Map and Control buttons for Active dispatches
+                        let dispatchControlsHTML = "";
+                        if (isActive) {
+                            dispatchControlsHTML = `
+                                <div id="admin-map-${order.id}" class="admin-live-map" style="width:100%; height:180px; border-radius: var(--radius-sm); margin-top:10px; border:1px solid rgba(27,67,50,0.12); display:none; position:relative; z-index:1;"></div>
+                                <div class="approved-order-controls" style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+                                    <div style="display:flex; gap:6px;">
+                                        <button class="btn btn-outline toggle-admin-map-btn" data-id="${order.id}" data-lat="${order.delivery_lat}" data-lng="${order.delivery_lng}" style="font-size:0.72rem; height:32px; flex:1; padding:0;"><i data-lucide="map"></i> Track Map</button>
+                                        <button class="btn btn-outline adjust-time-btn" data-id="${order.id}" style="font-size:0.72rem; height:32px; flex:1; padding:0;"><i data-lucide="clock"></i> Set ETA</button>
+                                    </div>
+                                    <div style="display:flex; gap:6px;">
+                                        <a href="/orders/${order.id}/delivery-agent" target="_blank" class="btn btn-outline" style="font-size:0.72rem; height:32px; flex:1.2; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:4px; background-color: var(--primary-ultra-light); color: var(--primary); padding:0;"><i data-lucide="phone"></i> Driver Portal</a>
+                                        <button class="btn btn-approve complete-order-btn" data-id="${order.id}" style="font-size:0.72rem; height:32px; flex:1; padding:0;"><i data-lucide="check"></i> Deliver</button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
                         const card = `
-                            <div class="order-card" style="opacity: 0.8;">
+                            <div class="order-card" style="opacity: ${cardOpacity}; ${activeBorder}">
                                 <div class="order-card-header">
                                     <div class="order-meta">
                                         <h4>Order #${order.id}</h4>
@@ -1428,7 +1482,8 @@
                                     <i data-lucide="phone" style="width: 12px; height: 12px; color: var(--primary);"></i>
                                     <span>Phone: ${order.phone_number || 'N/A'}</span>
                                 </div>
-                                <div class="order-totals" style="margin-top: 4px; padding-top: 8px;">
+                                ${dispatchControlsHTML}
+                                <div class="order-totals" style="margin-top: 6px; padding-top: 8px;">
                                     <span class="payment-desc" style="font-size:0.7rem;">${order.payment_method}</span>
                                     <span class="grand-total" style="font-size: 1rem;">₹${order.total_price.toFixed(2)}</span>
                                 </div>
@@ -1441,6 +1496,231 @@
                 // Re-render Lucide icons
                 if (window.lucide) window.lucide.createIcons();
                 bindInteractions();
+            }
+
+            // Registries for active admin maps and polling intervals
+            const adminMaps = {};
+            const adminPolls = {};
+            let googleMapsLoaded = false;
+
+            function loadGoogleMapsSDK(callback) {
+                if (window.google && window.google.maps) {
+                    if (callback) callback();
+                    return;
+                }
+                const apiKey = window.GOOGLE_MAPS_API_KEY || "";
+                if (!apiKey) {
+                    console.warn("Google Maps API Key is not set. Falling back to Leaflet.");
+                    if (callback) callback();
+                    return;
+                }
+                
+                const script = document.createElement("script");
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry`;
+                script.async = true;
+                script.defer = true;
+                script.onload = () => {
+                    googleMapsLoaded = true;
+                    if (callback) callback();
+                };
+                script.onerror = () => {
+                    console.error("Google Maps SDK failed to load. Falling back to Leaflet.");
+                    if (callback) callback();
+                };
+                document.head.appendChild(script);
+            }
+
+            function toggleAdminMap(orderId, customerLat, customerLng) {
+                const mapContainer = document.getElementById(`admin-map-${orderId}`);
+                if (!mapContainer) return;
+                
+                if (mapContainer.style.display === "none") {
+                    mapContainer.style.display = "block";
+                    loadGoogleMapsSDK(() => {
+                        initAdminLiveMap(orderId, customerLat, customerLng);
+                    });
+                } else {
+                    mapContainer.style.display = "none";
+                    if (adminPolls[orderId]) {
+                        clearInterval(adminPolls[orderId]);
+                        delete adminPolls[orderId];
+                    }
+                    if (adminMaps[orderId]) {
+                        delete adminMaps[orderId];
+                    }
+                }
+            }
+
+            function initAdminLiveMap(orderId, customerLat, customerLng) {
+                const mapContainerId = `admin-map-${orderId}`;
+                const container = document.getElementById(mapContainerId);
+                if (!container) return;
+                
+                const storeLat = 20.29424;
+                const storeLng = 85.81667;
+                
+                const isGoogleMaps = (window.google && window.google.maps && window.GOOGLE_MAPS_API_KEY);
+                
+                if (adminPolls[orderId]) {
+                    clearInterval(adminPolls[orderId]);
+                }
+
+                if (isGoogleMaps) {
+                    try {
+                        const map = new google.maps.Map(container, {
+                            zoom: 13,
+                            center: { lat: storeLat, lng: storeLng },
+                            mapTypeControl: false,
+                            streetViewControl: false,
+                            fullscreenControl: false
+                        });
+                        
+                        adminMaps[orderId] = map;
+                        
+                        const directionsService = new google.maps.DirectionsService();
+                        const directionsRenderer = new google.maps.DirectionsRenderer({
+                            map: map,
+                            suppressMarkers: true,
+                            polylineOptions: {
+                                strokeColor: '#2d6a4f',
+                                strokeWeight: 4
+                            }
+                        });
+                        
+                        const storeMarker = new google.maps.Marker({
+                            position: { lat: storeLat, lng: storeLng },
+                            map: map,
+                            label: "🌾",
+                            title: "Maa Bankeswari Store"
+                        });
+                        
+                        const customerMarker = new google.maps.Marker({
+                            position: { lat: customerLat, lng: customerLng },
+                            map: map,
+                            label: "🏠",
+                            title: "Customer Location"
+                        });
+                        
+                        const driverMarker = new google.maps.Marker({
+                            position: { lat: storeLat, lng: storeLng },
+                            map: map,
+                            label: "🛵",
+                            title: "Delivery Agent"
+                        });
+                        
+                        function pollDriverLocation() {
+                            fetch(`/api/orders/${orderId}/tracking`)
+                            .then(res => res.json())
+                            .then(data => {
+                                const driverLat = data.delivery_boy_lat;
+                                const driverLng = data.delivery_boy_lng;
+                                
+                                if (driverLat && driverLng) {
+                                    const driverPos = { lat: driverLat, lng: driverLng };
+                                    driverMarker.setPosition(driverPos);
+                                    
+                                    directionsService.route({
+                                        origin: driverPos,
+                                        destination: { lat: customerLat, lng: customerLng },
+                                        travelMode: google.maps.TravelMode.DRIVING
+                                    }, (result, status) => {
+                                        if (status === 'OK') {
+                                            directionsRenderer.setDirections(result);
+                                        }
+                                    });
+                                } else {
+                                    directionsService.route({
+                                        origin: { lat: storeLat, lng: storeLng },
+                                        destination: { lat: customerLat, lng: customerLng },
+                                        travelMode: google.maps.TravelMode.DRIVING
+                                    }, (result, status) => {
+                                        if (status === 'OK') {
+                                            directionsRenderer.setDirections(result);
+                                        }
+                                    });
+                                }
+                            })
+                            .catch(err => console.error("Admin tracking poll error:", err));
+                        }
+                        
+                        pollDriverLocation();
+                        adminPolls[orderId] = setInterval(pollDriverLocation, 4000);
+                        return;
+                    } catch (e) {
+                        console.error("Google Maps init error on admin card:", e);
+                    }
+                }
+                
+                // Fallback to Leaflet
+                try {
+                    const map = L.map(container, {
+                        zoomControl: false,
+                        attributionControl: false
+                    }).setView([storeLat, storeLng], 13);
+                    
+                    adminMaps[orderId] = map;
+                    
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                    
+                    const storeIcon = L.divIcon({
+                        className: 'admin-marker-store',
+                        html: `<div style="background-color: var(--primary); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; border: 1.5px solid var(--accent);">🌾</div>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    });
+                    
+                    const customerIcon = L.divIcon({
+                        className: 'admin-marker-customer',
+                        html: `<div style="background-color: var(--accent); color: var(--primary-dark); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; border: 1.5px solid var(--primary);">🏠</div>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    });
+                    
+                    const driverIcon = L.divIcon({
+                        className: 'admin-marker-driver',
+                        html: `<div style="background-color: var(--primary-light); color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; border: 1.5px solid white;">🛵</div>`,
+                        iconSize: [26, 26],
+                        iconAnchor: [13, 13]
+                    });
+                    
+                    L.marker([storeLat, storeLng], { icon: storeIcon }).addTo(map);
+                    L.marker([customerLat, customerLng], { icon: customerIcon }).addTo(map);
+                    
+                    const driverMarker = L.marker([storeLat, storeLng], { icon: driverIcon }).addTo(map);
+                    let polyline = null;
+                    
+                    function pollDriverLocationLeaflet() {
+                        fetch(`/api/orders/${orderId}/tracking`)
+                        .then(res => res.json())
+                        .then(data => {
+                            const driverLat = data.delivery_boy_lat || storeLat;
+                            const driverLng = data.delivery_boy_lng || storeLng;
+                            
+                            driverMarker.setLatLng([driverLat, driverLng]);
+                            
+                            const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${driverLng},${driverLat};${customerLng},${customerLat}?overview=full&geometries=geojson`;
+                            fetch(osrmUrl)
+                            .then(r => r.json())
+                            .then(rdata => {
+                                if (rdata && rdata.routes && rdata.routes.length > 0) {
+                                    const coords = rdata.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                                    if (polyline) {
+                                        polyline.setLatLngs(coords);
+                                    } else {
+                                        polyline = L.polyline(coords, { color: '#2d6a4f', weight: 3 }).addTo(map);
+                                    }
+                                    map.fitBounds(polyline.getBounds(), { padding: [10, 10] });
+                                }
+                            });
+                        })
+                        .catch(err => console.error("Admin tracking leaflet poll error:", err));
+                    }
+                    
+                    pollDriverLocationLeaflet();
+                    adminPolls[orderId] = setInterval(pollDriverLocationLeaflet, 4000);
+                } catch (err) {
+                    console.error("Leaflet fallback map error:", err);
+                }
             }
 
             // Click event delegation & binds
@@ -1463,7 +1743,11 @@
                 approveBtns.forEach(btn => {
                     btn.onclick = () => {
                         const orderId = parseInt(btn.getAttribute("data-id"));
-                        processStatusUpdate(orderId, "Approved");
+                        const deliveryTime = prompt(`Enter Estimated Delivery Time (in minutes) for Order #${orderId}:`, "10");
+                        if (deliveryTime !== null) {
+                            const minutes = parseInt(deliveryTime) || 10;
+                            processStatusUpdate(orderId, "Approved", minutes);
+                        }
                     };
                 });
 
@@ -1478,14 +1762,54 @@
                         }
                     };
                 });
+
+                // Toggle Live Map buttons
+                const mapToggleBtns = document.querySelectorAll(".toggle-admin-map-btn");
+                mapToggleBtns.forEach(btn => {
+                    btn.onclick = () => {
+                        const orderId = parseInt(btn.getAttribute("data-id"));
+                        const lat = parseFloat(btn.getAttribute("data-lat"));
+                        const lng = parseFloat(btn.getAttribute("data-lng"));
+                        toggleAdminMap(orderId, lat, lng);
+                    };
+                });
+
+                // Live adjust ETA buttons
+                const adjustTimeBtns = document.querySelectorAll(".adjust-time-btn");
+                adjustTimeBtns.forEach(btn => {
+                    btn.onclick = () => {
+                        const orderId = parseInt(btn.getAttribute("data-id"));
+                        const deliveryTime = prompt(`Adjust Estimated Delivery Time (in minutes) for Order #${orderId}:`, "10");
+                        if (deliveryTime !== null) {
+                            const minutes = parseInt(deliveryTime) || 10;
+                            processStatusUpdate(orderId, "Approved", minutes);
+                        }
+                    };
+                });
+
+                // Mark order completed / delivered buttons
+                const completeBtns = document.querySelectorAll(".complete-order-btn");
+                completeBtns.forEach(btn => {
+                    btn.onclick = () => {
+                        const orderId = parseInt(btn.getAttribute("data-id"));
+                        const confirmDelivered = confirm(`Mark Order #${orderId} as DELIVERED?`);
+                        if (confirmDelivered) {
+                            processStatusUpdate(orderId, "Delivered");
+                        }
+                    };
+                });
             }
 
             // Process order state updates
-            function processStatusUpdate(orderId, status) {
+            function processStatusUpdate(orderId, status, deliveryTimeMins) {
+                const payload = { order_status: status };
+                if (deliveryTimeMins !== undefined) {
+                    payload.delivery_time_mins = deliveryTimeMins;
+                }
                 fetch(`/api/orders/${orderId}/status`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ order_status: status })
+                    body: JSON.stringify(payload)
                 })
                 .then(res => {
                     if (!res.ok) throw new Error("Failed to update status");
@@ -1860,11 +2184,17 @@
             }
 
             // ----------------------------------------------------
-            // GEMINI AI SETTINGS INTERACTIONS
+            // GEMINI AI & GOOGLE MAPS SETTINGS INTERACTIONS
             // ----------------------------------------------------
             const geminiKeyInput = document.getElementById("gemini-key-input");
             const toggleKeyVisibility = document.getElementById("toggle-gemini-key-visibility");
             const aiVerificationToggle = document.getElementById("ai-verification-toggle");
+            
+            const mapsKeyInput = document.getElementById("google-maps-key-input");
+            const toggleMapsKeyVisibility = document.getElementById("toggle-google-maps-key-visibility");
+            const deliveryAgentPhoneInput = document.getElementById("delivery-agent-phone-input");
+            const showAgentPhoneToggle = document.getElementById("show-agent-phone-toggle");
+            
             const saveSettingsBtn = document.getElementById("save-ai-settings-btn");
             const aiStatusIndicator = document.getElementById("ai-status-indicator");
 
@@ -1882,6 +2212,19 @@
                 });
             }
 
+            if (toggleMapsKeyVisibility && mapsKeyInput) {
+                toggleMapsKeyVisibility.addEventListener("click", () => {
+                    if (mapsKeyInput.type === "password") {
+                        mapsKeyInput.type = "text";
+                        toggleMapsKeyVisibility.innerHTML = `<i data-lucide="eye-off" style="width: 18px; height: 18px;"></i>`;
+                    } else {
+                        mapsKeyInput.type = "password";
+                        toggleMapsKeyVisibility.innerHTML = `<i data-lucide="eye" style="width: 18px; height: 18px;"></i>`;
+                    }
+                    if (window.lucide) window.lucide.createIcons();
+                });
+            }
+
             // Fetch current settings
             function fetchSettings() {
                 fetch("/api/settings")
@@ -1893,8 +2236,17 @@
                     if (geminiKeyInput && data.gemini_api_key) {
                         geminiKeyInput.value = data.gemini_api_key;
                     }
+                    if (mapsKeyInput && data.google_maps_api_key) {
+                        mapsKeyInput.value = data.google_maps_api_key;
+                    }
                     if (document.getElementById("store-upi-input") && data.store_upi_id) {
                         document.getElementById("store-upi-input").value = data.store_upi_id;
+                    }
+                    if (deliveryAgentPhoneInput && data.delivery_agent_phone) {
+                        deliveryAgentPhoneInput.value = data.delivery_agent_phone;
+                    }
+                    if (showAgentPhoneToggle) {
+                        showAgentPhoneToggle.checked = data.show_agent_phone_to_customer;
                     }
                     if (aiVerificationToggle) {
                         aiVerificationToggle.checked = data.ai_verification_enabled;
@@ -1931,18 +2283,29 @@
             if (saveSettingsBtn) {
                 saveSettingsBtn.addEventListener("click", () => {
                     const keyVal = geminiKeyInput ? geminiKeyInput.value.trim() : "";
+                    const mapsKeyVal = mapsKeyInput ? mapsKeyInput.value.trim() : "";
                     const upiVal = document.getElementById("store-upi-input") ? document.getElementById("store-upi-input").value.trim() : "";
+                    const phoneVal = deliveryAgentPhoneInput ? deliveryAgentPhoneInput.value.trim() : "";
                     const isEnabled = aiVerificationToggle ? aiVerificationToggle.checked : true;
+                    const showAgentPhoneVal = showAgentPhoneToggle ? showAgentPhoneToggle.checked : true;
                     
                     const payload = {
                         ai_verification_enabled: isEnabled,
-                        store_upi_id: upiVal
+                        store_upi_id: upiVal,
+                        delivery_agent_phone: phoneVal,
+                        show_agent_phone_to_customer: showAgentPhoneVal
                     };
-                    // Only send key if it is new and not masked stars
+                    // Only send keys if they are new and not masked stars
                     if (keyVal && !keyVal.endsWith("****")) {
                         payload.gemini_api_key = keyVal;
                     } else if (keyVal === "") {
                         payload.gemini_api_key = "";
+                    }
+
+                    if (mapsKeyVal && !mapsKeyVal.endsWith("****")) {
+                        payload.google_maps_api_key = mapsKeyVal;
+                    } else if (mapsKeyVal === "") {
+                        payload.google_maps_api_key = "";
                     }
                     
                     fetch("/api/settings", {

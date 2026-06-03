@@ -53,3 +53,6 @@ class Order(Base):
     ai_forensics_json = Column(String, nullable=True)
     delivery_lat = Column(Float, nullable=True)
     delivery_lng = Column(Float, nullable=True)
+    delivery_time_mins = Column(Integer, default=10)
+    delivery_boy_lat = Column(Float, nullable=True)
+    delivery_boy_lng = Column(Float, nullable=True)

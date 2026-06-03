@@ -207,30 +207,82 @@
 
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Hero Section -->
-        <section class="hero-section">
-            <div class="hero-overlay"></div>
-            <div class="hero-content">
-                <span class="hero-subtitle">Est. 2012 — Purest Grade Grains</span>
-                <h2 class="hero-title">Bringing Nourishment & Tradition To Your Home</h2>
-                <p class="hero-description">
-                    At <strong>Maa Bankeswari Rice Store</strong>, we handpick the finest varieties of aromatic basmati,
-                    daily-grade rice, and unpolished, protein-rich dals. Experience culinary perfection.
-                </p>
-                <div class="hero-features">
-                    <div class="feature-tag">
-                        <i data-lucide="shield-check"></i>
-                        <span>100% Pure & Hygienic</span>
-                    </div>
-                    <div class="feature-tag">
-                        <i data-lucide="leaf"></i>
-                        <span>Naturally Sourced</span>
-                    </div>
-                    <div class="feature-tag">
-                        <i data-lucide="award"></i>
-                        <span>Premium Grade Only</span>
+        <!-- Hero Slideshow Carousel Section -->
+        <section class="hero-section carousel-container">
+            <!-- Slide 1: Brand & Tradition (Default) -->
+            <div class="carousel-slide active" style="background-image: linear-gradient(rgba(8, 28, 21, 0.65), rgba(8, 28, 21, 0.65)), url('https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=1200');">
+                <div class="hero-content">
+                    <span class="hero-subtitle">Est. 2012 — Purest Grade Grains</span>
+                    <h2 class="hero-title">Bringing Nourishment & Tradition To Your Home</h2>
+                    <p class="hero-description">
+                        At <strong>Maa Bankeswari Rice Store</strong>, we handpick the finest varieties of aromatic basmati, daily-grade rice, and unpolished, protein-rich dals. Experience culinary perfection.
+                    </p>
+                    <div class="hero-features">
+                        <div class="feature-tag"><i data-lucide="shield-check"></i><span>100% Pure & Hygienic</span></div>
+                        <div class="feature-tag"><i data-lucide="leaf"></i><span>Naturally Sourced</span></div>
+                        <div class="feature-tag"><i data-lucide="award"></i><span>Premium Grade Only</span></div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Slide 2: Free Delivery Offer -->
+            <div class="carousel-slide" style="background-image: linear-gradient(rgba(8, 28, 21, 0.65), rgba(8, 28, 21, 0.65)), url('https://images.unsplash.com/photo-1596797038530-2c107229654b?auto=format&fit=crop&q=80&w=1200');">
+                <div class="hero-content">
+                    <span class="hero-subtitle">Special Introductory Offer 🎁</span>
+                    <h2 class="hero-title">First Order Delivery is Absolutely Free!</h2>
+                    <p class="hero-description">
+                        Order your kitchen staples online today and enjoy zero delivery charges to your doorstep. Use code <strong style="color: var(--accent);">FREEFIRST</strong> at checkout. No minimum balance required!
+                    </p>
+                    <div class="hero-features">
+                        <div class="feature-tag"><i data-lucide="truck"></i><span>Zero Delivery Cost</span></div>
+                        <div class="feature-tag"><i data-lucide="zap"></i><span>Superfast Dispatch</span></div>
+                        <div class="feature-tag"><i data-lucide="gift"></i><span>Save Extra on First Buy</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Shop Success Milestone -->
+            <div class="carousel-slide" style="background-image: linear-gradient(rgba(8, 28, 21, 0.65), rgba(8, 28, 21, 0.65)), url('https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&q=80&w=1200');">
+                <div class="hero-content">
+                    <span class="hero-subtitle">14+ Years of Trust & Quality 🏆</span>
+                    <h2 class="hero-title">Serving 10,000+ Happy Local Families</h2>
+                    <p class="hero-description">
+                        Since 2012, we have been Bhubaneswar's most trusted grain partner, supplying over 10,000 kg of premium basmati, unpolished dals, and grocery items monthly with 100% customer satisfaction.
+                    </p>
+                    <div class="hero-features">
+                        <div class="feature-tag"><i data-lucide="users"></i><span>10k+ Families Served</span></div>
+                        <div class="feature-tag"><i data-lucide="thumbs-up"></i><span>14 Years of Legacy</span></div>
+                        <div class="feature-tag"><i data-lucide="award"></i><span>Top Rated Grain Store</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Premium Basmati Discount -->
+            <div class="carousel-slide" style="background-image: linear-gradient(rgba(8, 28, 21, 0.65), rgba(8, 28, 21, 0.65)), url('https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?auto=format&fit=crop&q=80&w=1200');">
+                <div class="hero-content">
+                    <span class="hero-subtitle">Weekly Grains Special 🌾</span>
+                    <h2 class="hero-title">Get Flat 10% Off on Premium Basmati</h2>
+                    <p class="hero-description">
+                        Cook aromatic biryanis and fluffy pulaos with our aged, long-grain signature Basmati rice. Fresh batch direct from milling partners, now at discounted prices for a limited time!
+                    </p>
+                    <div class="hero-features">
+                        <div class="feature-tag"><i data-lucide="percent"></i><span>Flat 10% Discount</span></div>
+                        <div class="feature-tag"><i data-lucide="sparkles"></i><span>Super Long Grains</span></div>
+                        <div class="feature-tag"><i data-lucide="heart"></i><span>Rich Aroma & Taste</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Controls -->
+            <button class="carousel-btn prev-btn" aria-label="Previous Slide"><i data-lucide="chevron-left"></i></button>
+            <button class="carousel-btn next-btn" aria-label="Next Slide"><i data-lucide="chevron-right"></i></button>
+
+            <!-- Navigation Dots -->
+            <div class="carousel-dots">
+                <span class="dot active" data-index="0"></span>
+                <span class="dot" data-index="1"></span>
+                <span class="dot" data-index="2"></span>
+                <span class="dot" data-index="3"></span>
             </div>
         </section>
 
@@ -430,6 +482,12 @@
                 <p style="color: var(--text-medium); font-size: 0.85rem; text-align: center; margin-bottom: 16px;">Choose your delivery address by pinning your location on the map below, or type details manually.</p>
                 
                 <div class="form-group" style="margin-bottom: 14px;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 6px;">🔍 Search Delivery Location</label>
+                    <div style="position: relative; margin-bottom: 12px;">
+                        <input type="text" id="checkout-search-input" placeholder="Type your location (e.g. Nayapalli, Bhubaneswar)..." style="width: 100%; padding: 10px 14px; border: 1.5px solid rgba(27,67,50,0.15); border-radius: var(--radius-sm); outline: none; font-family: var(--font-body); font-size: 0.9rem; background-color: var(--bg-card); color: var(--text-dark);">
+                        <div id="checkout-search-suggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-card); border: 1px solid rgba(27,67,50,0.15); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); z-index: 1000; max-height: 200px; overflow-y: auto; display: none; box-shadow: var(--shadow-md);"></div>
+                    </div>
+
                     <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 6px;">
                         📍 Pin Your Delivery Location (Click map or drag marker)
                     </label>
@@ -692,6 +750,10 @@
                     <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="user" style="width: 14px; height: 14px; color: var(--primary-light);"></i> Delivery Agent:</span>
                     <strong style="font-weight: 700;">Ramesh Kumar</strong>
                 </div>
+                <div id="tracking-driver-phone-wrapper" style="display: none; justify-content: space-between; font-size: 0.88rem; color: var(--primary-dark); margin-bottom: 8px;">
+                    <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="phone" style="width: 14px; height: 14px; color: var(--primary-light);"></i> Agent Phone:</span>
+                    <strong style="font-weight: 700;"><a id="tracking-driver-phone-link" href="#" style="color: var(--primary); text-decoration: underline;"></a></strong>
+                </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--primary-dark); margin-bottom: 8px;">
                     <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="map-pin" style="width: 14px; height: 14px; color: var(--primary-light);"></i> Distance Remaining:</span>
                     <strong id="tracking-distance-val" style="font-weight: 700;">Calculating...</strong>
@@ -923,6 +985,9 @@
     </div>
 
     <!-- Javascript -->
+    <script>
+        window.GOOGLE_MAPS_API_KEY = "{{ google_maps_api_key }}";
+    </script>
     <script src="/static/js/app.js"></script>
     <script>
         // Initialize lucide icons

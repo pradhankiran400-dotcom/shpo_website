@@ -8,8 +8,11 @@ _settings_lock = threading.Lock()
 
 DEFAULT_SETTINGS = {
     "gemini_api_key": "",
+    "google_maps_api_key": "",
     "ai_verification_enabled": True,
-    "store_upi_id": "9078445116@ybl"
+    "store_upi_id": "9078445116@ybl",
+    "delivery_agent_phone": "",
+    "show_agent_phone_to_customer": True
 }
 
 def load_settings() -> Dict[str, Any]:
@@ -61,7 +64,7 @@ def save_settings(new_settings: Dict[str, Any]) -> bool:
             for k in DEFAULT_SETTINGS.keys():
                 if k in new_settings:
                     # Do not overwrite with stars/placeholder keys
-                    if k == "gemini_api_key" and ("..." in str(new_settings[k]) or "*" in str(new_settings[k])):
+                    if k in ("gemini_api_key", "google_maps_api_key") and ("..." in str(new_settings[k]) or "*" in str(new_settings[k])):
                         continue
                     current[k] = new_settings[k]
                     

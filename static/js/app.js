@@ -569,10 +569,156 @@ document.addEventListener("DOMContentLoaded", () => {
     let deliveryMarker = null;
     let routeLine = null;
 
-    // Initialize interactive Leaflet map inside checkout modal
+    // Google Interactive Map State Variables
+    let googleCheckoutMap = null;
+    let googleCheckoutMarker = null;
+    let googleCheckoutRouteLine = null;
+    let googleCheckoutAutocomplete = null;
+
+    // Dynamically load Google Maps SDK if API key is provided
+    function loadGoogleMapsSDK(callback) {
+        if (window.google && window.google.maps) {
+            if (callback) callback();
+            return;
+        }
+        const key = window.GOOGLE_MAPS_API_KEY;
+        if (!key || key.trim() === "" || key.includes("YOUR_API_KEY")) {
+            console.log("No Google Maps API Key configured, defaulting to Leaflet fallback.");
+            if (callback) callback();
+            return;
+        }
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=initGoogleMapsServices`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+        
+        window.initGoogleMapsServices = () => {
+            if (callback) callback();
+        };
+    }
+
+    // Initialize interactive Map inside checkout modal (supports Google Maps & Leaflet fallback)
     function initCheckoutMap() {
+        const isGoogle = (window.google && window.google.maps && window.GOOGLE_MAPS_API_KEY);
+
+        if (isGoogle) {
+            if (googleCheckoutMap) {
+                // Reset states
+                setTimeout(() => {
+                    googleCheckoutMarker.setPosition({ lat: STORE_LAT, lng: STORE_LNG });
+                    if (googleCheckoutRouteLine) {
+                        googleCheckoutRouteLine.setPath([{ lat: STORE_LAT, lng: STORE_LNG }, { lat: STORE_LAT, lng: STORE_LNG }]);
+                    }
+                    googleCheckoutMap.setCenter({ lat: STORE_LAT, lng: STORE_LNG });
+                    googleCheckoutMap.setZoom(14);
+                }, 150);
+                return;
+            }
+
+            try {
+                googleCheckoutMap = new google.maps.Map(document.getElementById('checkout-map'), {
+                    center: { lat: STORE_LAT, lng: STORE_LNG },
+                    zoom: 14,
+                    mapTypeControl: false,
+                    streetViewControl: false,
+                    fullscreenControl: false
+                });
+
+                // Store Marker
+                new google.maps.Marker({
+                    position: { lat: STORE_LAT, lng: STORE_LNG },
+                    map: googleCheckoutMap,
+                    label: "🌾",
+                    title: "Maa Bankeswari Store"
+                });
+
+                // User Draggable Marker
+                googleCheckoutMarker = new google.maps.Marker({
+                    position: { lat: STORE_LAT, lng: STORE_LNG },
+                    map: googleCheckoutMap,
+                    draggable: true,
+                    label: "📍",
+                    title: "Your Location"
+                });
+
+                // Route Line
+                googleCheckoutRouteLine = new google.maps.Polyline({
+                    path: [{ lat: STORE_LAT, lng: STORE_LNG }, { lat: STORE_LAT, lng: STORE_LNG }],
+                    geodesic: true,
+                    strokeColor: '#1b4332',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 3.5,
+                    map: googleCheckoutMap
+                });
+
+                function updateGoogleRoute(lat, lng) {
+                    googleCheckoutMarker.setPosition({ lat: lat, lng: lng });
+                    if (googleCheckoutRouteLine) {
+                        googleCheckoutRouteLine.setPath([
+                            { lat: STORE_LAT, lng: STORE_LNG },
+                            { lat: lat, lng: lng }
+                        ]);
+                    }
+
+                    const dist = calculateHaversineDistance(STORE_LAT, STORE_LNG, lat, lng);
+                    applyCalculatedDistance(dist);
+
+                    if (deliveryAddressInput) {
+                        deliveryAddressInput.value = "Fetching address details... ⏳";
+                    }
+
+                    const geocoder = new google.maps.Geocoder();
+                    geocoder.geocode({ location: { lat: lat, lng: lng } }, (results, status) => {
+                        if (status === "OK" && results[0] && deliveryAddressInput) {
+                            deliveryAddressInput.value = results[0].formatted_address;
+                        }
+                    });
+                }
+
+                googleCheckoutMarker.addListener("dragend", () => {
+                    const pos = googleCheckoutMarker.getPosition();
+                    updateGoogleRoute(pos.lat(), pos.lng());
+                });
+
+                googleCheckoutMap.addListener("click", (e) => {
+                    const pos = e.latLng;
+                    updateGoogleRoute(pos.lat(), pos.lng());
+                });
+
+                // Setup Places Autocomplete
+                const searchInput = document.getElementById("checkout-search-input");
+                if (searchInput) {
+                    googleCheckoutAutocomplete = new google.maps.places.Autocomplete(searchInput);
+                    googleCheckoutAutocomplete.bindTo("bounds", googleCheckoutMap);
+                    googleCheckoutAutocomplete.addListener("place_changed", () => {
+                        const place = googleCheckoutAutocomplete.getPlace();
+                        if (!place.geometry || !place.geometry.location) {
+                            showToast("Location not found. Try searching or pinning manually.");
+                            return;
+                        }
+
+                        const pos = place.geometry.location;
+                        googleCheckoutMap.setCenter(pos);
+                        googleCheckoutMap.setZoom(16);
+                        updateGoogleRoute(pos.lat(), pos.lng());
+
+                        if (deliveryAddressInput) {
+                            deliveryAddressInput.value = place.formatted_address || place.name;
+                        }
+                    });
+                }
+
+                // Setup Suggestion UI Fallback trigger bindings
+                setupSuggestionUI();
+                return;
+            } catch (err) {
+                console.error("Could not construct Google checkout map:", err);
+            }
+        }
+
+        // Leaflet Fallback
         if (checkoutMap) {
-            // Map already created: trigger resize invalidation and reset pin states
             setTimeout(() => {
                 checkoutMap.invalidateSize();
                 deliveryMarker.setLatLng([STORE_LAT, STORE_LNG]);
@@ -586,18 +732,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            // Instantiate map
             checkoutMap = L.map('checkout-map', {
                 zoomControl: true,
                 attributionControl: false
             }).setView([STORE_LAT, STORE_LNG], 14);
 
-            // Add smooth tile layer (OpenStreetMap)
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19
             }).addTo(checkoutMap);
 
-            // Elegant, animated DivIcons matching store's forest green & gold design theme
             const storeIcon = L.divIcon({
                 className: 'store-custom-marker',
                 html: `<div style="background-color: var(--primary); border: 2px solid var(--accent); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: var(--shadow-md);">🌾</div>`,
@@ -612,7 +755,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 iconAnchor: [14, 14]
             });
 
-            // Inject CSS keyframes for marker floating micro-animation dynamically if not present
             if (!document.getElementById("marker-float-style")) {
                 const style = document.createElement("style");
                 style.id = "marker-float-style";
@@ -625,14 +767,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.head.appendChild(style);
             }
 
-            // Fixed Store Marker
             storeMarker = L.marker([STORE_LAT, STORE_LNG], { icon: storeIcon }).addTo(checkoutMap);
             storeMarker.bindPopup(`
                 <div class="store-popup-title">🌾 Maa Bankeswari Store</div>
                 <div style="font-size: 0.72rem; color: var(--text-medium); margin-top: 4px;">Indradhanu Market, IRC Village</div>
             `).openPopup();
 
-            // Draggable Delivery Pin
             deliveryMarker = L.marker([STORE_LAT, STORE_LNG], {
                 icon: deliveryIcon,
                 draggable: true
@@ -643,7 +783,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div style="font-size: 0.72rem; color: var(--text-medium); margin-top: 4px; font-weight: 700;">Drag me or click map to set delivery spot!</div>
             `).openPopup();
 
-            // Dynamically redraw dotted connecting route path polyline
             function updateRoutePolyline(latlng) {
                 const points = [
                     [STORE_LAT, STORE_LNG],
@@ -661,7 +800,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            // Reverse Geocoding through OpenStreetMap's Nominatim service
             function reverseGeocodePosition(lat, lng) {
                 if (deliveryAddressInput) {
                     deliveryAddressInput.value = "Fetching address details from map pin... ⏳";
@@ -691,7 +829,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
 
-            // Unified location state transition
             function executeLocationChange(latlng) {
                 deliveryMarker.setLatLng(latlng);
                 updateRoutePolyline(latlng);
@@ -702,7 +839,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 reverseGeocodePosition(latlng.lat, latlng.lng);
             }
 
-            // Drag handler
             deliveryMarker.on('dragend', () => {
                 const latlng = deliveryMarker.getLatLng();
                 executeLocationChange(latlng);
@@ -712,7 +848,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 `).openPopup();
             });
 
-            // Map click handler
             checkoutMap.on('click', (e) => {
                 executeLocationChange(e.latlng);
                 deliveryMarker.bindPopup(`
@@ -721,7 +856,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 `).openPopup();
             });
 
-            // Safety layout tick
+            setupSuggestionUI();
+
             setTimeout(() => {
                 checkoutMap.invalidateSize();
             }, 100);
@@ -729,6 +865,100 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             console.error("Could not construct Leaflet interactive map:", error);
         }
+    }
+
+    // Nominatim geocoding suggest box fallback setup
+    function setupSuggestionUI() {
+        const searchInput = document.getElementById("checkout-search-input");
+        const suggestionsBox = document.getElementById("checkout-search-suggestions");
+        if (!searchInput || !suggestionsBox) return;
+
+        // Clear existing listeners
+        const newSearchInput = searchInput.cloneNode(true);
+        searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+
+        let debounceTimeout;
+        newSearchInput.addEventListener("input", (e) => {
+            const query = e.target.value.trim();
+            clearTimeout(debounceTimeout);
+            if (query.length < 3) {
+                suggestionsBox.style.display = "none";
+                return;
+            }
+
+            debounceTimeout = setTimeout(() => {
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        suggestionsBox.innerHTML = data.map(item => `
+                            <div class="search-suggestion-item" data-lat="${item.lat}" data-lon="${item.lon}" data-name="${item.display_name}" style="padding: 10px 14px; cursor: pointer; border-bottom: 1px dashed rgba(27,67,50,0.06); font-size: 0.85rem;">
+                                📍 ${item.display_name}
+                            </div>
+                        `).join("");
+                        suggestionsBox.style.display = "block";
+
+                        suggestionsBox.querySelectorAll(".search-suggestion-item").forEach(item => {
+                            item.addEventListener("click", () => {
+                                const lat = parseFloat(item.getAttribute("data-lat"));
+                                const lon = parseFloat(item.getAttribute("data-lon"));
+                                const name = item.getAttribute("data-name");
+
+                                suggestionsBox.style.display = "none";
+                                newSearchInput.value = name;
+
+                                const isGoogle = (window.google && window.google.maps && window.GOOGLE_MAPS_API_KEY);
+                                if (isGoogle) {
+                                    const pos = new google.maps.LatLng(lat, lon);
+                                    googleCheckoutMap.setCenter(pos);
+                                    googleCheckoutMarker.setPosition(pos);
+                                    if (googleCheckoutRouteLine) {
+                                        googleCheckoutRouteLine.setPath([
+                                            { lat: STORE_LAT, lng: STORE_LNG },
+                                            { lat: lat, lng: lon }
+                                        ]);
+                                    }
+
+                                    const dist = calculateHaversineDistance(STORE_LAT, STORE_LNG, lat, lon);
+                                    applyCalculatedDistance(dist);
+
+                                    if (deliveryAddressInput) {
+                                        deliveryAddressInput.value = name;
+                                    }
+                                } else {
+                                    const latlng = L.latLng(lat, lon);
+                                    deliveryMarker.setLatLng(latlng);
+                                    if (routeLine) {
+                                        routeLine.setLatLngs([[STORE_LAT, STORE_LNG], [lat, lon]]);
+                                    } else {
+                                        routeLine = L.polyline([[STORE_LAT, STORE_LNG], [lat, lon]], {
+                                            color: '#1b4332', weight: 3.5, dashArray: '6, 8', opacity: 0.75
+                                        }).addTo(checkoutMap);
+                                    }
+                                    checkoutMap.setView(latlng, 15);
+
+                                    const dist = calculateHaversineDistance(STORE_LAT, STORE_LNG, lat, lon);
+                                    applyCalculatedDistance(dist);
+
+                                    if (deliveryAddressInput) {
+                                        deliveryAddressInput.value = name;
+                                    }
+                                }
+                            });
+                        });
+                    } else {
+                        suggestionsBox.style.display = "none";
+                    }
+                })
+                .catch(err => console.error("OSM Geocoding Suggest failed:", err));
+            }, 500);
+        });
+
+        document.addEventListener("click", (e) => {
+            if (e.target !== newSearchInput && e.target !== suggestionsBox) {
+                suggestionsBox.style.display = "none";
+            }
+        });
     }
 
     function openCheckoutFormModal(subtotal) {
@@ -741,9 +971,10 @@ document.addEventListener("DOMContentLoaded", () => {
         calculatedDeliveryCharge = 0;
 
         if (deliveryAddressInput) deliveryAddressInput.value = "";
+        const searchInput = document.getElementById("checkout-search-input");
+        if (searchInput) searchInput.value = "";
         if (distanceSummaryBox) distanceSummaryBox.style.display = "none";
         
-        // Reset panels to Step 1 (Address details)
         const addressStepPanel = document.getElementById("address-step-panel");
         const paymentStepPanel = document.getElementById("payment-step-panel");
         const proceedToPaymentBtn = document.getElementById("proceed-to-payment-btn");
@@ -768,7 +999,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (checkoutDeliveryVal) checkoutDeliveryVal.innerText = "0.00";
         if (checkoutGrandtotalVal) checkoutGrandtotalVal.innerText = subtotal.toFixed(2);
 
-        // Reset payment selection state
         selectedPaymentMethod = "COD";
         uploadedReceiptUrl = null;
         const paymentMethodCODInput = document.getElementById("payment-method-cod-label") ? document.getElementById("payment-method-cod-label").querySelector('input') : null;
@@ -789,10 +1019,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const distanceLimitAlert = document.getElementById("distance-limit-alert");
         if (distanceLimitAlert) distanceLimitAlert.style.display = "none";
 
-        // Initialize and display interactive map
-        initCheckoutMap();
+        // Load Maps SDK dynamically and initialize the checkout Map
+        const isGoogle = (window.google && window.google.maps && window.GOOGLE_MAPS_API_KEY);
+        if (isGoogle) {
+            initCheckoutMap();
+        } else if (window.GOOGLE_MAPS_API_KEY) {
+            loadGoogleMapsSDK(() => {
+                initCheckoutMap();
+            });
+        } else {
+            initCheckoutMap();
+        }
 
-        // Proactively fetch high-accuracy browser geolocation to auto-center map pin
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
@@ -800,41 +1038,67 @@ document.addEventListener("DOMContentLoaded", () => {
                     const lon = pos.coords.longitude;
                     const dist = calculateHaversineDistance(STORE_LAT, STORE_LNG, lat, lon);
 
-                    // Check if within delivery zone to avoid auto-locking far away mock locations
-                    if (dist <= 20 && checkoutMap && deliveryMarker) {
-                        const latlng = { lat: lat, lng: lon };
-                        deliveryMarker.setLatLng(latlng);
-                        checkoutMap.setView([lat, lon], 14);
-                        
-                        const points = [[STORE_LAT, STORE_LNG], [lat, lon]];
-                        if (routeLine) {
-                            routeLine.setLatLngs(points);
-                        } else {
-                            routeLine = L.polyline(points, {
-                                color: '#1b4332',
-                                weight: 3.5,
-                                dashArray: '6, 8',
-                                opacity: 0.75
-                            }).addTo(checkoutMap);
-                        }
+                    const isGoogleActive = (window.google && window.google.maps && window.GOOGLE_MAPS_API_KEY);
 
-                        applyCalculatedDistance(dist);
+                    if (isGoogleActive) {
+                        if (dist <= 20 && googleCheckoutMap && googleCheckoutMarker) {
+                            const posLatLng = new google.maps.LatLng(lat, lon);
+                            googleCheckoutMarker.setPosition(posLatLng);
+                            googleCheckoutMap.setCenter(posLatLng);
+                            googleCheckoutMap.setZoom(14);
 
-                        if (deliveryAddressInput) {
-                            deliveryAddressInput.value = "Fetching current location address details... ⏳";
-                        }
-                        
-                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data && data.display_name && deliveryAddressInput) {
-                                deliveryAddressInput.value = data.display_name;
+                            if (googleCheckoutRouteLine) {
+                                googleCheckoutRouteLine.setPath([
+                                    { lat: STORE_LAT, lng: STORE_LNG },
+                                    { lat: lat, lng: lon }
+                                ]);
                             }
-                        })
-                        .catch(err => console.error("Auto center geocode failed:", err));
+                            applyCalculatedDistance(dist);
+
+                            if (deliveryAddressInput) {
+                                deliveryAddressInput.value = "Fetching current address... ⏳";
+                            }
+
+                            const geocoder = new google.maps.Geocoder();
+                            geocoder.geocode({ location: { lat: lat, lng: lon } }, (results, status) => {
+                                if (status === "OK" && results[0] && deliveryAddressInput) {
+                                    deliveryAddressInput.value = results[0].formatted_address;
+                                }
+                            });
+                        }
+                    } else {
+                        if (dist <= 20 && checkoutMap && deliveryMarker) {
+                            const latlng = { lat: lat, lng: lon };
+                            deliveryMarker.setLatLng(latlng);
+                            checkoutMap.setView([lat, lon], 14);
+                            
+                            const points = [[STORE_LAT, STORE_LNG], [lat, lon]];
+                            if (routeLine) {
+                                routeLine.setLatLngs(points);
+                            } else {
+                                routeLine = L.polyline(points, {
+                                    color: '#1b4332', weight: 3.5, dashArray: '6, 8', opacity: 0.75
+                                }).addTo(checkoutMap);
+                            }
+
+                            applyCalculatedDistance(dist);
+
+                            if (deliveryAddressInput) {
+                                deliveryAddressInput.value = "Fetching current address... ⏳";
+                            }
+                            
+                            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`)
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data && data.display_name && deliveryAddressInput) {
+                                    deliveryAddressInput.value = data.display_name;
+                                }
+                            })
+                            .catch(err => console.error("Auto center reverse geocode failed:", err));
+                        }
                     }
                 },
-                (err) => console.log("Standard browser auto-geolocation prompt skipped/denied."),
+                (err) => console.log("Standard browser auto-geolocation skipped/denied."),
                 { enableHighAccuracy: true, timeout: 3500 }
             );
         }
@@ -2020,6 +2284,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     data-lat="${order.delivery_lat || ''}" 
                                     data-lng="${order.delivery_lng || ''}" 
                                     data-distance="${order.distance_km || ''}" 
+                                    data-time="${order.delivery_time_mins || '10'}" 
                                     style="height: 32px; font-size: 0.8rem; border-radius: var(--radius-sm); margin-top: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
                                     <i data-lucide="map-pin" style="width: 14px; height: 14px;"></i> Track Live Delivery
                                 </button>
@@ -2058,12 +2323,13 @@ document.addEventListener("DOMContentLoaded", () => {
                             const lat = parseFloat(btn.getAttribute("data-lat")) || null;
                             const lng = parseFloat(btn.getAttribute("data-lng")) || null;
                             const distance = parseFloat(btn.getAttribute("data-distance")) || 5.0;
+                            const timeMins = parseInt(btn.getAttribute("data-time")) || 10;
                             
                             // Close profile drawer first
                             closeProfileDrawer();
                             
                             // Launch live tracking map modal
-                            openTrackingModal(orderId, lat, lng, distance);
+                            openTrackingModal(orderId, lat, lng, distance, timeMins);
                         };
                     });
                     
@@ -2296,14 +2562,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ----------------------------------------------------
-    // LIVE ORDER TRACING & MAP SIMULATION SYSTEM
+    // LIVE ORDER TRACING & MAP SYSTEM (REAL-TIME POLLING)
     // ----------------------------------------------------
     let trackingMap = null;
     let trackingStoreMarker = null;
     let trackingUserMarker = null;
     let trackingBoyMarker = null;
     let trackingRouteLine = null;
-    let trackingAnimationInterval = null;
+    let trackingAnimationInterval = null; // Stores our 4s polling timer
+
+    let googleTrackingMap = null;
+    let googleTrackingStoreMarker = null;
+    let googleTrackingUserMarker = null;
+    let googleTrackingBoyMarker = null;
+    let googleTrackingDirectionsService = null;
+    let googleTrackingDirectionsDisplay = null;
 
     const trackingModal = document.getElementById("tracking-modal");
     const closeTrackingModal = document.getElementById("close-tracking-modal");
@@ -2330,7 +2603,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function openTrackingModal(orderId, deliveryLat, deliveryLng, distanceKm) {
+    function openTrackingModal(orderId, deliveryLat, deliveryLng, distanceKm, deliveryTimeMins) {
         if (trackingModal) {
             trackingModal.classList.add("active");
             document.body.style.overflow = "hidden";
@@ -2339,228 +2612,353 @@ document.addEventListener("DOMContentLoaded", () => {
         const orderIdEl = document.getElementById("tracking-order-id");
         if (orderIdEl) orderIdEl.innerText = `#${orderId}`;
 
-        const statusBadge = document.getElementById("tracking-status-badge");
-        if (statusBadge) {
-            statusBadge.innerText = "Order Confirmed";
-            statusBadge.style.color = "var(--primary)";
-            statusBadge.style.backgroundColor = "var(--primary-ultra-light)";
-            statusBadge.style.borderColor = "rgba(45,106,79,0.15)";
-        }
-
-        // Reset progress bar
-        const progressBar = document.getElementById("tracking-progress-bar");
-        if (progressBar) progressBar.style.width = "0%";
-
-        // Reset timeline steps
-        const steps = [1, 2, 3, 4].map(num => document.getElementById(`tracking-step-${num}`));
-        steps.forEach(step => {
-            if (step) {
-                step.className = "";
-                const dot = step.querySelector(".timeline-dot");
-                if (dot) {
-                    dot.style.backgroundColor = "var(--text-light)";
-                    dot.style.boxShadow = "0 0 0 2px var(--text-light)";
-                }
-                const label = step.querySelector("span");
-                if (label) {
-                    label.style.color = "var(--text-medium)";
-                    label.style.fontWeight = "400";
-                }
-            }
-        });
-
-        // Clear any running animation
+        // Clear any running interval/polling
         if (trackingAnimationInterval) {
             clearInterval(trackingAnimationInterval);
             trackingAnimationInterval = null;
         }
 
-        // Use defaults if coordinates are missing (prevent issues with old test data)
-        const finalLat = deliveryLat || (STORE_LAT + 0.015 + Math.random() * 0.01);
-        const finalLng = deliveryLng || (STORE_LNG + 0.015 + Math.random() * 0.01);
-        const distance = distanceKm || calculateHaversineDistance(STORE_LAT, STORE_LNG, finalLat, finalLng);
+        // We will perform the first fetch immediately, then poll every 4 seconds
+        pollTrackingData(orderId);
+        trackingAnimationInterval = setInterval(() => pollTrackingData(orderId), 4000);
+    }
 
-        // Initialize map
-        setTimeout(() => {
-            if (!trackingMap) {
-                try {
-                    trackingMap = L.map('tracking-map', {
-                        zoomControl: true,
-                        attributionControl: false
-                    }).setView([STORE_LAT, STORE_LNG], 14);
+    function pollTrackingData(orderId) {
+        fetch(`/api/orders/${orderId}/tracking`)
+        .then(res => {
+            if (!res.ok) throw new Error("Tracking API failed");
+            return res.json();
+        })
+        .then(data => {
+            updateTrackingUI(data);
+        })
+        .catch(err => {
+            console.error("Error polling tracking details:", err);
+        });
+    }
 
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        maxZoom: 19
-                    }).addTo(trackingMap);
-                } catch (e) {
-                    console.error("Leaflet loading error:", e);
-                    return;
+    function updateTrackingUI(data) {
+        const statusBadge = document.getElementById("tracking-status-badge");
+        const distanceEl = document.getElementById("tracking-distance-val");
+        const etaEl = document.getElementById("tracking-eta-val");
+        const progressBar = document.getElementById("tracking-progress-bar");
+        const phoneWrapper = document.getElementById("tracking-driver-phone-wrapper");
+        const phoneLink = document.getElementById("tracking-driver-phone-link");
+
+        if (!data) return;
+
+        // 1. Update Status Badge & Progress Timeline
+        const status = data.order_status;
+        if (statusBadge) {
+            statusBadge.innerText = status;
+            if (status === "Approved") {
+                statusBadge.innerText = "Confirmed";
+                statusBadge.style.color = "var(--primary)";
+                statusBadge.style.backgroundColor = "var(--primary-ultra-light)";
+                statusBadge.style.borderColor = "rgba(45,106,79,0.15)";
+            } else if (status === "Dispatched") {
+                statusBadge.style.color = "var(--primary)";
+                statusBadge.style.backgroundColor = "var(--primary-ultra-light)";
+                statusBadge.style.borderColor = "var(--primary)";
+            } else if (status === "Out for Delivery") {
+                statusBadge.style.color = "var(--warning)";
+                statusBadge.style.backgroundColor = "rgba(239,108,0,0.08)";
+                statusBadge.style.borderColor = "var(--warning)";
+            } else if (status === "Delivered") {
+                statusBadge.style.color = "var(--success)";
+                statusBadge.style.backgroundColor = "rgba(46,125,50,0.08)";
+                statusBadge.style.borderColor = "var(--success)";
+            } else {
+                statusBadge.style.color = "var(--text-light)";
+                statusBadge.style.backgroundColor = "rgba(0,0,0,0.05)";
+                statusBadge.style.borderColor = "rgba(0,0,0,0.1)";
+            }
+        }
+
+        // Timeline steps updater helper
+        function setStepStatus(stepNum, stepStatus) {
+            const step = document.getElementById(`tracking-step-${stepNum}`);
+            if (!step) return;
+            if (stepStatus === "active") {
+                step.className = "step-active";
+            } else if (stepStatus === "done") {
+                step.className = "step-done";
+            } else {
+                step.className = "";
+            }
+        }
+
+        // Status mapping to timeline progress and steps
+        let progressPct = 0;
+        if (status === "Pending Approval") {
+            setStepStatus(1, "active");
+            setStepStatus(2, "");
+            setStepStatus(3, "");
+            setStepStatus(4, "");
+            progressPct = 5;
+        } else if (status === "Approved") {
+            setStepStatus(1, "done");
+            setStepStatus(2, "active");
+            setStepStatus(3, "");
+            setStepStatus(4, "");
+            progressPct = 25;
+        } else if (status === "Dispatched") {
+            setStepStatus(1, "done");
+            setStepStatus(2, "done");
+            setStepStatus(3, "active");
+            setStepStatus(4, "");
+            progressPct = 50;
+        } else if (status === "Out for Delivery") {
+            setStepStatus(1, "done");
+            setStepStatus(2, "done");
+            setStepStatus(3, "active");
+            setStepStatus(4, "");
+            progressPct = 75;
+        } else if (status === "Delivered") {
+            setStepStatus(1, "done");
+            setStepStatus(2, "done");
+            setStepStatus(3, "done");
+            setStepStatus(4, "done");
+            progressPct = 100;
+        }
+
+        if (progressBar) {
+            progressBar.style.width = `${progressPct}%`;
+        }
+
+        // 2. Display ETA remaining
+        if (etaEl) {
+            if (status === "Delivered") {
+                etaEl.innerText = "Arrived / Delivered!";
+            } else if (status === "Rejected") {
+                etaEl.innerText = "Cancelled";
+            } else {
+                etaEl.innerText = `${data.delivery_time_mins || 15} mins`;
+            }
+        }
+
+        // 3. Driver phone details
+        if (phoneWrapper && phoneLink) {
+            if (data.driver_phone && (status === "Approved" || status === "Dispatched" || status === "Out for Delivery")) {
+                phoneLink.innerText = data.driver_phone;
+                phoneLink.href = `tel:${data.driver_phone}`;
+                phoneWrapper.style.display = "flex";
+            } else {
+                phoneWrapper.style.display = "none";
+            }
+        }
+
+        // 4. Coordinates extraction
+        const customerLat = data.delivery_lat || STORE_LAT;
+        const customerLng = data.delivery_lng || STORE_LNG;
+        const driverLat = (data.delivery_boy_lat && data.delivery_boy_lat !== 0) ? data.delivery_boy_lat : STORE_LAT;
+        const driverLng = (data.delivery_boy_lng && data.delivery_boy_lng !== 0) ? data.delivery_boy_lng : STORE_LNG;
+
+        // 5. Draw & Update maps (Google Maps or Leaflet fallback)
+        const isGoogle = (window.google && window.google.maps && window.GOOGLE_MAPS_API_KEY);
+
+        if (isGoogle) {
+            updateGoogleTrackingMap(customerLat, customerLng, driverLat, driverLng, distanceEl);
+        } else {
+            updateLeafletTrackingMap(customerLat, customerLng, driverLat, driverLng, distanceEl);
+        }
+    }
+
+    function updateGoogleTrackingMap(customerLat, customerLng, driverLat, driverLng, distanceEl) {
+        if (trackingMap) {
+            trackingMap.remove();
+            trackingMap = null;
+        }
+
+        const mapContainer = document.getElementById("tracking-map");
+        if (!mapContainer) return;
+
+        if (!googleTrackingMap) {
+            try {
+                googleTrackingMap = new google.maps.Map(mapContainer, {
+                    center: { lat: STORE_LAT, lng: STORE_LNG },
+                    zoom: 14,
+                    mapTypeControl: false,
+                    streetViewControl: false,
+                    fullscreenControl: false
+                });
+
+                googleTrackingStoreMarker = new google.maps.Marker({
+                    position: { lat: STORE_LAT, lng: STORE_LNG },
+                    map: googleTrackingMap,
+                    label: "🌾",
+                    title: "Maa Bankeswari Store"
+                });
+
+                googleTrackingUserMarker = new google.maps.Marker({
+                    position: { lat: customerLat, lng: customerLng },
+                    map: googleTrackingMap,
+                    label: "🏠",
+                    title: "Your Location"
+                });
+
+                googleTrackingBoyMarker = new google.maps.Marker({
+                    position: { lat: driverLat, lng: driverLng },
+                    map: googleTrackingMap,
+                    label: "🛵",
+                    title: "Delivery Agent"
+                });
+
+                googleTrackingDirectionsService = new google.maps.DirectionsService();
+                googleTrackingDirectionsDisplay = new google.maps.DirectionsRenderer({
+                    map: googleTrackingMap,
+                    suppressMarkers: true,
+                    polylineOptions: {
+                        strokeColor: "#2d6a4f",
+                        strokeWeight: 4.5,
+                        strokeOpacity: 0.85
+                    }
+                });
+            } catch (err) {
+                console.error("Google Tracking Map init failed:", err);
+                return;
+            }
+        }
+
+        googleTrackingUserMarker.setPosition({ lat: customerLat, lng: customerLng });
+        googleTrackingBoyMarker.setPosition({ lat: driverLat, lng: driverLng });
+
+        const bounds = new google.maps.LatLngBounds();
+        bounds.extend({ lat: STORE_LAT, lng: STORE_LNG });
+        bounds.extend({ lat: customerLat, lng: customerLng });
+        bounds.extend({ lat: driverLat, lng: driverLng });
+        googleTrackingMap.fitBounds(bounds);
+
+        googleTrackingDirectionsService.route({
+            origin: { lat: driverLat, lng: driverLng },
+            destination: { lat: customerLat, lng: customerLng },
+            travelMode: google.maps.TravelMode.DRIVING
+        }, (result, status) => {
+            if (status === "OK" && result) {
+                googleTrackingDirectionsDisplay.setDirections(result);
+                const route = result.routes[0];
+                if (route && route.legs && route.legs[0]) {
+                    const realDistance = route.legs[0].distance.text;
+                    if (distanceEl) distanceEl.innerText = realDistance;
                 }
             } else {
-                trackingMap.invalidateSize();
-                // Remove old layers
-                if (trackingStoreMarker) trackingMap.removeLayer(trackingStoreMarker);
-                if (trackingUserMarker) trackingMap.removeLayer(trackingUserMarker);
-                if (trackingBoyMarker) trackingMap.removeLayer(trackingBoyMarker);
-                if (trackingRouteLine) trackingMap.removeLayer(trackingRouteLine);
+                const dist = calculateHaversineDistance(driverLat, driverLng, customerLat, customerLng);
+                if (distanceEl) distanceEl.innerText = `${dist.toFixed(2)} km`;
+            }
+        });
+    }
+
+    function updateLeafletTrackingMap(customerLat, customerLng, driverLat, driverLng, distanceEl) {
+        if (googleTrackingMap) {
+            googleTrackingMap = null;
+            const mapContainer = document.getElementById("tracking-map");
+            if (mapContainer) mapContainer.innerHTML = "";
+        }
+
+        if (!trackingMap) {
+            try {
+                trackingMap = L.map('tracking-map', {
+                    zoomControl: true,
+                    attributionControl: false
+                }).setView([STORE_LAT, STORE_LNG], 14);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19
+                }).addTo(trackingMap);
+            } catch (e) {
+                console.error("Leaflet loading error:", e);
+                return;
+            }
+        } else {
+            if (trackingStoreMarker) trackingMap.removeLayer(trackingStoreMarker);
+            if (trackingUserMarker) trackingMap.removeLayer(trackingUserMarker);
+            if (trackingBoyMarker) trackingMap.removeLayer(trackingBoyMarker);
+            if (trackingRouteLine) trackingMap.removeLayer(trackingRouteLine);
+        }
+
+        const storeIcon = L.divIcon({
+            className: 'store-custom-marker',
+            html: `<div style="background-color: var(--primary); border: 2px solid var(--accent); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: var(--shadow-md);">🌾</div>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+        });
+
+        const userIcon = L.divIcon({
+            className: 'user-custom-marker',
+            html: `<div style="background-color: var(--accent); border: 2px solid var(--primary-dark); color: var(--primary-dark); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; box-shadow: var(--shadow-md); transform-origin: bottom center;">🏠</div>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
+        });
+
+        const boyIcon = L.divIcon({
+            className: 'delivery-boy-marker',
+            html: `<div style="background-color: var(--primary-light); border: 2px solid var(--white); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; box-shadow: var(--shadow-md); animation: marker-float 1.5s infinite ease-in-out;">🛵</div>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+        });
+
+        trackingStoreMarker = L.marker([STORE_LAT, STORE_LNG], { icon: storeIcon }).addTo(trackingMap);
+        trackingUserMarker = L.marker([customerLat, customerLng], { icon: userIcon }).addTo(trackingMap);
+        trackingBoyMarker = L.marker([driverLat, driverLng], { icon: boyIcon }).addTo(trackingMap);
+
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${driverLng},${driverLat};${customerLng},${customerLat}?overview=full&geometries=geojson`;
+
+        fetch(osrmUrl)
+        .then(res => res.json())
+        .then(data => {
+            let roadPoints = [];
+            let distance = 0;
+            if (data && data.routes && data.routes.length > 0) {
+                const route = data.routes[0];
+                distance = route.distance / 1000;
+                if (route.geometry) {
+                    roadPoints = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                }
+            }
+            if (roadPoints.length === 0) {
+                roadPoints = [[driverLat, driverLng], [customerLat, customerLng]];
+                distance = calculateHaversineDistance(driverLat, driverLng, customerLat, customerLng);
             }
 
-            // Custom Icons
-            const storeIcon = L.divIcon({
-                className: 'store-custom-marker',
-                html: `<div style="background-color: var(--primary); border: 2px solid var(--accent); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: var(--shadow-md);">🌾</div>`,
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
+            if (distanceEl) {
+                distanceEl.innerText = `${distance.toFixed(2)} km`;
+            }
 
-            const userIcon = L.divIcon({
-                className: 'user-custom-marker',
-                html: `<div style="background-color: var(--accent); border: 2px solid var(--primary-dark); color: var(--primary-dark); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; box-shadow: var(--shadow-md); transform-origin: bottom center;">🏠</div>`,
-                iconSize: [28, 28],
-                iconAnchor: [14, 14]
-            });
-
-            const boyIcon = L.divIcon({
-                className: 'delivery-boy-marker',
-                html: `<div style="background-color: var(--primary-light); border: 2px solid var(--white); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; box-shadow: var(--shadow-md); animation: marker-float 1.5s infinite ease-in-out;">🛵</div>`,
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
-
-            // Add markers
-            trackingStoreMarker = L.marker([STORE_LAT, STORE_LNG], { icon: storeIcon }).addTo(trackingMap)
-                .bindPopup("<div class='store-popup-title'>🌾 Maa Bankeswari Store</div>");
-            
-            trackingUserMarker = L.marker([finalLat, finalLng], { icon: userIcon }).addTo(trackingMap)
-                .bindPopup("<div class='delivery-popup-title'>📍 Your Location</div>");
-
-            // Route path
-            trackingRouteLine = L.polyline([[STORE_LAT, STORE_LNG], [finalLat, finalLng]], {
-                color: '#40916c',
-                weight: 3.5,
-                dashArray: '6, 8',
-                opacity: 0.75
+            trackingRouteLine = L.polyline(roadPoints, {
+                color: '#2d6a4f',
+                weight: 4.5,
+                opacity: 0.85
             }).addTo(trackingMap);
 
-            // Center map to show both markers
-            const bounds = L.latLngBounds([[STORE_LAT, STORE_LNG], [finalLat, finalLng]]);
+            const bounds = L.latLngBounds([
+                [STORE_LAT, STORE_LNG],
+                [customerLat, customerLng],
+                [driverLat, driverLng]
+            ]);
             trackingMap.fitBounds(bounds, { padding: [40, 40] });
-
-            // Initialize Delivery Boy at Store Location
-            trackingBoyMarker = L.marker([STORE_LAT, STORE_LNG], { icon: boyIcon }).addTo(trackingMap);
-
-            // Start position simulation
-            const startTime = Date.now();
-            const animationDuration = 45000; // 45 seconds total journey duration
+        })
+        .catch(err => {
+            console.warn("OSM routing failed, drawing straight line:", err);
+            const roadPoints = [[driverLat, driverLng], [customerLat, customerLng]];
+            const distance = calculateHaversineDistance(driverLat, driverLng, customerLat, customerLng);
             
-            const distanceEl = document.getElementById("tracking-distance-val");
-            const etaEl = document.getElementById("tracking-eta-val");
-
-            function setStepStatus(stepNum, status) {
-                const step = document.getElementById(`tracking-step-${stepNum}`);
-                if (!step) return;
-                
-                const dot = step.querySelector(".timeline-dot");
-                const label = step.querySelector("span");
-                
-                if (status === "active") {
-                    step.classList.remove("step-done");
-                    step.classList.add("step-active");
-                    if (dot) {
-                        dot.style.backgroundColor = "";
-                        dot.style.boxShadow = "";
-                    }
-                    if (label) {
-                        label.style.color = "";
-                        label.style.fontWeight = "";
-                    }
-                } else if (status === "done") {
-                    step.classList.remove("step-active");
-                    step.classList.add("step-done");
-                    if (dot) {
-                        dot.style.backgroundColor = "";
-                        dot.style.boxShadow = "";
-                    }
-                    if (label) {
-                        label.style.color = "";
-                        label.style.fontWeight = "";
-                    }
-                }
+            if (distanceEl) {
+                distanceEl.innerText = `${distance.toFixed(2)} km`;
             }
 
-            trackingAnimationInterval = setInterval(() => {
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(1.0, elapsed / animationDuration);
+            trackingRouteLine = L.polyline(roadPoints, {
+                color: '#2d6a4f',
+                weight: 4.5,
+                opacity: 0.85
+            }).addTo(trackingMap);
 
-                // Update coordinates
-                const currLat = STORE_LAT + (finalLat - STORE_LAT) * progress;
-                const currLng = STORE_LNG + (finalLng - STORE_LNG) * progress;
-                trackingBoyMarker.setLatLng([currLat, currLng]);
-
-                // Update UI stats
-                const remainingDist = (distance * (1 - progress)).toFixed(2);
-                const remainingETA = Math.ceil(remainingDist * 3);
-
-                if (distanceEl) distanceEl.innerText = `${remainingDist} km`;
-                if (etaEl) etaEl.innerText = progress >= 0.98 ? "Arrived!" : `${remainingETA} mins`;
-
-                if (progressBar) progressBar.style.width = `${progress * 100}%`;
-
-                // Update status timeline
-                if (progress >= 0.98) {
-                    if (statusBadge) {
-                        statusBadge.innerText = "Arrived";
-                        statusBadge.style.color = "var(--success)";
-                        statusBadge.style.backgroundColor = "rgba(46,125,50,0.08)";
-                        statusBadge.style.borderColor = "var(--success)";
-                    }
-                    setStepStatus(1, "done");
-                    setStepStatus(2, "done");
-                    setStepStatus(3, "done");
-                    setStepStatus(4, "active");
-                    
-                    clearInterval(trackingAnimationInterval);
-                    trackingAnimationInterval = null;
-                    
-                    showToast("🛵 Your delivery boy has arrived at your location!");
-                    playChime("order");
-                } else if (progress >= 0.5) {
-                    if (statusBadge) {
-                        statusBadge.innerText = "Out for Delivery";
-                        statusBadge.style.color = "var(--warning)";
-                        statusBadge.style.backgroundColor = "rgba(239,108,0,0.08)";
-                        statusBadge.style.borderColor = "var(--warning)";
-                    }
-                    setStepStatus(1, "done");
-                    setStepStatus(2, "done");
-                    setStepStatus(3, "active");
-                    setStepStatus(4, "");
-                } else if (progress >= 0.15) {
-                    if (statusBadge) {
-                        statusBadge.innerText = "Dispatched";
-                        statusBadge.style.color = "var(--primary)";
-                        statusBadge.style.backgroundColor = "var(--primary-ultra-light)";
-                        statusBadge.style.borderColor = "var(--primary)";
-                    }
-                    setStepStatus(1, "done");
-                    setStepStatus(2, "active");
-                    setStepStatus(3, "");
-                    setStepStatus(4, "");
-                } else {
-                    if (statusBadge) {
-                        statusBadge.innerText = "Order Confirmed";
-                        statusBadge.style.color = "var(--primary)";
-                        statusBadge.style.backgroundColor = "var(--primary-ultra-light)";
-                        statusBadge.style.borderColor = "rgba(45,106,79,0.15)";
-                    }
-                    setStepStatus(1, "active");
-                    setStepStatus(2, "");
-                    setStepStatus(3, "");
-                    setStepStatus(4, "");
-                }
-            }, 100);
-
-        }, 200);
+            const bounds = L.latLngBounds([
+                [STORE_LAT, STORE_LNG],
+                [customerLat, customerLng],
+                [driverLat, driverLng]
+            ]);
+            trackingMap.fitBounds(bounds, { padding: [40, 40] });
+        });
     }
 
     // ----------------------------------------------------
@@ -2578,7 +2976,6 @@ document.addEventListener("DOMContentLoaded", () => {
         knownApprovedOrders.clear();
         isFirstPoll = true;
         
-        // Pre-populate known approved orders silently to avoid redundant alerts on reload
         fetch(`/api/users/${currentUser.id}/orders`)
         .then(res => {
             if (!res.ok) throw new Error();
@@ -2596,7 +2993,6 @@ document.addEventListener("DOMContentLoaded", () => {
             isFirstPoll = false;
         });
 
-        // Poll every 6 seconds
         orderPollingInterval = setInterval(pollOrderStatus, 6000);
     }
 
@@ -2634,25 +3030,108 @@ document.addEventListener("DOMContentLoaded", () => {
             isFirstPoll = false;
             
             if (justApprovedOrder) {
-                // Play notification sound, show toast, and launch live tracking map suddenly!
                 playChime("order");
                 showToast(`🎉 Order #${justApprovedOrder.id} has been approved! Live delivery tracking started.`);
                 
-                // Refresh drawer metrics and order list if currently open
                 fetchOrderHistory();
                 
-                // Launch tracking modal
                 openTrackingModal(
                     justApprovedOrder.id, 
                     justApprovedOrder.delivery_lat, 
                     justApprovedOrder.delivery_lng, 
-                    justApprovedOrder.distance_km
+                    justApprovedOrder.distance_km,
+                    justApprovedOrder.delivery_time_mins || 10
                 );
             }
         })
         .catch(err => {
             console.warn("Silent order polling error:", err);
         });
+    }
+
+    // ----------------------------------------------------
+    // HERO SLIDESHOW CAROUSEL INITIALIZATION
+    // ----------------------------------------------------
+    const slides = document.querySelectorAll(".carousel-slide");
+    const dots = document.querySelectorAll(".carousel-dots .dot");
+    const prevBtn = document.querySelector(".prev-btn");
+    const nextBtn = document.querySelector(".next-btn");
+    let currentSlide = 0;
+    let carouselInterval = null;
+
+    function showSlide(index) {
+        if (slides.length === 0) return;
+        if (index >= slides.length) index = 0;
+        if (index < 0) index = slides.length - 1;
+        currentSlide = index;
+
+        slides.forEach((slide, i) => {
+            if (i === currentSlide) {
+                slide.classList.add("active");
+            } else {
+                slide.classList.remove("active");
+            }
+        });
+
+        dots.forEach((dot, i) => {
+            if (i === currentSlide) {
+                dot.classList.add("active");
+            } else {
+                dot.classList.remove("active");
+            }
+        });
+    }
+
+    function nextSlide() {
+        showSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+        showSlide(currentSlide - 1);
+    }
+
+    function startCarouselAutoPlay() {
+        stopCarouselAutoPlay();
+        carouselInterval = setInterval(nextSlide, 5000);
+    }
+
+    function stopCarouselAutoPlay() {
+        if (carouselInterval) {
+            clearInterval(carouselInterval);
+            carouselInterval = null;
+        }
+    }
+
+    if (slides.length > 0) {
+        showSlide(0);
+        startCarouselAutoPlay();
+
+        if (prevBtn) {
+            prevBtn.addEventListener("click", () => {
+                prevSlide();
+                startCarouselAutoPlay();
+            });
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener("click", () => {
+                nextSlide();
+                startCarouselAutoPlay();
+            });
+        }
+
+        dots.forEach(dot => {
+            dot.addEventListener("click", () => {
+                const idx = parseInt(dot.getAttribute("data-index"));
+                showSlide(idx);
+                startCarouselAutoPlay();
+            });
+        });
+
+        const carouselContainer = document.querySelector(".carousel-container");
+        if (carouselContainer) {
+            carouselContainer.addEventListener("mouseenter", stopCarouselAutoPlay);
+            carouselContainer.addEventListener("mouseleave", startCarouselAutoPlay);
+        }
     }
 
     // Load initial conversation states
