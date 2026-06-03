@@ -78,5 +78,45 @@
         "image_path": "/media/profile_pics/premium_toor_dal.png",
         "in_stock": false,
         "badge": "Out of Stock"
+    },
+    {
+        "name": "Premium Mustard Oil",
+        "category": "oil",
+        "description": "100% pure cold-pressed mustard oil, rich in flavor and natural aroma.",
+        "price": 175.0,
+        "unit": "L",
+        "image_path": "/media/profile_pics/mustard_oil.png",
+        "in_stock": true,
+        "badge": "Pure & Natural"
+    },
+    {
+        "name": "Refined White Sugar",
+        "category": "oil",
+        "description": "Sulphur-free double refined sugar, clean and high sweetness.",
+        "price": 48.0,
+        "unit": "kg",
+        "image_path": "/media/profile_pics/sugar.png",
+        "in_stock": true,
+        "badge": "Sulphur Free"
+    },
+    {
+        "name": "Premium Sharbati Wheat Grains",
+        "category": "wheat",
+        "description": "Selected golden Sharbati wheat grains, high in nutrition and fiber.",
+        "price": 42.0,
+        "unit": "kg",
+        "image_path": "/media/profile_pics/wheat.png",
+        "in_stock": true,
+        "badge": "Golden Grains"
+    },
+    {
+        "name": "Fresh Chakki Atta",
+        "category": "wheat",
+        "description": "100% whole wheat stone-ground chakki atta, perfect for soft and healthy rotis.",
+        "price": 45.0,
+        "unit": "kg",
+        "image_path": "/media/profile_pics/atta.png",
+        "in_stock": true,
+        "badge": "Whole Wheat"
     }
 ]

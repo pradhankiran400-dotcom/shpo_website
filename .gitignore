@@ -3,4 +3,7 @@ __pycache__/
 data/settings.json
 *.db
 used_utrs.txt
+# Environment variables
 .env
+.env.local
+.env.*.local

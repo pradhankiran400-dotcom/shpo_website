@@ -2509,7 +2509,8 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             body: JSON.stringify({
                 message: query,
-                history: chatHistory.slice(0, -1).slice(-6) // Up to last 6 chat items (excluding the latest query)
+                history: chatHistory.slice(0, -1).slice(-6), // Up to last 6 chat items (excluding the latest query)
+                user_id: (typeof currentUser !== "undefined" && currentUser) ? currentUser.id : null
             })
         })
         .then(async (response) => {

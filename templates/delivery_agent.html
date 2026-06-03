@@ -312,7 +312,34 @@
         const CUSTOMER_LNG = {{ order.delivery_lng or 85.81667 }};
         const STORE_LAT = 20.29424;
         const STORE_LNG = 85.81667;
+        // Note: The Google Maps API Key is a public key intentionally exposed client-side for maps library initialization.
         const GOOGLE_MAPS_API_KEY = "{{ google_maps_api_key }}";
+
+        // Global Fetch Interceptor to catch 429 Rate Limit responses and display a toast alert.
+        (function() {
+            const originalFetch = window.fetch;
+            window.fetch = async function(...args) {
+                try {
+                    const response = await originalFetch(...args);
+                    if (response.status === 429) {
+                        const retryAfter = response.headers.get("Retry-After") || response.headers.get("retry-after");
+                        let message = "Too many requests. Please slow down!";
+                        if (retryAfter) {
+                            message = `Rate limit exceeded. Please retry after ${retryAfter} seconds.`;
+                        }
+                        
+                        if (typeof showToast === "function") {
+                            showToast(message, false);
+                        } else {
+                            alert(message);
+                        }
+                    }
+                    return response;
+                } catch (error) {
+                    throw error;
+                }
+            };
+        })();
 
         let gpsWatchId = null;
         let map = null;

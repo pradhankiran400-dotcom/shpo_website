@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request,Depends,HTTPException, File, UploadFile
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -26,7 +26,117 @@ class SettingsUpdate(BaseModel):
 
 models.Base.metadata.create_all(bind=engine)
 
+import time
+import threading
+from collections import defaultdict
+
+class InMemoryRateLimiter:
+    def __init__(self):
+        self.lock = threading.Lock()
+        # Maps key -> list of request timestamps
+        self.requests = defaultdict(list)
+
+    def is_allowed(self, key: str, max_requests: int, window_seconds: int) -> tuple[bool, int]:
+        now = time.time()
+        with self.lock:
+            timestamps = self.requests[key]
+            
+            # Filter to keep only timestamps in the current window
+            window_start = now - window_seconds
+            timestamps = [t for t in timestamps if t > window_start]
+            
+            if len(timestamps) < max_requests:
+                timestamps.append(now)
+                self.requests[key] = timestamps
+                return True, 0
+                
+            self.requests[key] = timestamps
+            # Calculate remaining seconds to wait
+            oldest_ts = timestamps[0]
+            retry_after = int(oldest_ts + window_seconds - now)
+            if retry_after <= 0:
+                retry_after = 1
+            return False, retry_after
+
+# Instantiate rate limiters for different tiers
+auth_limiter = InMemoryRateLimiter()
+general_limiter = InMemoryRateLimiter()
+ai_limiter = InMemoryRateLimiter()
+upload_limiter = InMemoryRateLimiter()
+
+def get_client_ip(request: Request) -> str:
+    x_forwarded_for = request.headers.get("x-forwarded-for")
+    if x_forwarded_for:
+        return x_forwarded_for.split(",")[0].strip()
+    return request.client.host if request.client else "127.0.0.1"
+
 app = FastAPI(title="Maa Bankeswari Rice Store")
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    path = request.url.path
+    if path.startswith("/api/"):
+        ip = get_client_ip(request)
+        
+        # 1. Auth endpoints (login, register, admin authenticate): 5 requests per 15 minutes
+        if path in ("/api/login", "/api/register", "/api/admin/authenticate"):
+            allowed, retry_after = auth_limiter.is_allowed(ip, max_requests=5, window_seconds=900)
+            if not allowed:
+                return JSONResponse(
+                    status_code=429,
+                    content={"detail": "Too many authentication attempts. Please try again after 15 minutes."},
+                    headers={"Retry-After": str(retry_after)}
+                )
+                
+        # 2. File upload endpoints: 5 requests per minute
+        elif path == "/api/orders/upload-receipt":
+            allowed, retry_after = upload_limiter.is_allowed(ip, max_requests=5, window_seconds=60)
+            if not allowed:
+                return JSONResponse(
+                    status_code=429,
+                    content={"detail": "Too many file uploads. Please wait before retrying."},
+                    headers={"Retry-After": str(retry_after)}
+                )
+                
+        # 3. AI / LLM proxy endpoints (chatbot): 10 requests per minute per user
+        elif path == "/api/chatbot":
+            user_key = None
+            try:
+                # Read the request body to extract user_id if present
+                body_bytes = await request.body()
+                async def receive():
+                    return {"type": "http.request", "body": body_bytes, "more_body": False}
+                request._receive = receive
+                
+                body = json.loads(body_bytes.decode())
+                if body and "user_id" in body and body["user_id"]:
+                    user_key = f"user_{body['user_id']}"
+            except Exception:
+                pass
+                
+            if not user_key:
+                user_key = f"ip_{ip}"
+                
+            allowed, retry_after = ai_limiter.is_allowed(user_key, max_requests=10, window_seconds=60)
+            if not allowed:
+                return JSONResponse(
+                    status_code=429,
+                    content={"detail": "Too many AI requests. Please slow down."},
+                    headers={"Retry-After": str(retry_after)}
+                )
+                
+        # 4. General API limit: 60 requests per minute per IP
+        # Note: Apply this general check to all /api/ endpoints to catch remaining ones
+        allowed, retry_after = general_limiter.is_allowed(ip, max_requests=60, window_seconds=60)
+        if not allowed:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Rate limit exceeded. Try again later."},
+                headers={"Retry-After": str(retry_after)}
+            )
+
+    response = await call_next(request)
+    return response
 
 def get_db():
     db = SessionLocal()
@@ -139,9 +249,73 @@ def startup_event():
                         print(f"Successfully seeded {len(products_data)} products to database!")
                 except Exception as e:
                     print(f"Error seeding database: {e}")
-        else:
-            # Sync products to file only if database has products
-            sync_products_to_file(db)
+        # Ensure new Staples (oil, sugar, wheat, atta) exist in database
+        new_staples = [
+            {
+                "name": "Premium Mustard Oil",
+                "category": "oil",
+                "description": "100% pure cold-pressed mustard oil, rich in flavor and natural aroma.",
+                "price": 175.0,
+                "unit": "L",
+                "image_url": "/media/profile_pics/mustard_oil.png",
+                "in_stock": True,
+                "badge": "Pure & Natural"
+            },
+            {
+                "name": "Refined White Sugar",
+                "category": "oil",
+                "description": "Sulphur-free double refined sugar, clean and high sweetness.",
+                "price": 48.0,
+                "unit": "kg",
+                "image_url": "/media/profile_pics/sugar.png",
+                "in_stock": True,
+                "badge": "Sulphur Free"
+            },
+            {
+                "name": "Premium Sharbati Wheat Grains",
+                "category": "wheat",
+                "description": "Selected golden Sharbati wheat grains, high in nutrition and fiber.",
+                "price": 42.0,
+                "unit": "kg",
+                "image_url": "/media/profile_pics/wheat.png",
+                "in_stock": True,
+                "badge": "Golden Grains"
+            },
+            {
+                "name": "Fresh Chakki Atta",
+                "category": "wheat",
+                "description": "100% whole wheat stone-ground chakki atta, perfect for soft and healthy rotis.",
+                "price": 45.0,
+                "unit": "kg",
+                "image_url": "/media/profile_pics/atta.png",
+                "in_stock": True,
+                "badge": "Whole Wheat"
+            }
+        ]
+        
+        db_changed = False
+        for item in new_staples:
+            exists = db.execute(select(models.Product).where(models.Product.name == item["name"])).scalars().first()
+            if not exists:
+                new_p = models.Product(
+                    name=item["name"],
+                    category=item["category"],
+                    description=item["description"],
+                    price=item["price"],
+                    unit=item["unit"],
+                    image_url=item["image_url"],
+                    in_stock=item["in_stock"],
+                    badge=item["badge"]
+                )
+                db.add(new_p)
+                db_changed = True
+                print(f"[SEEDING]: Added new product {item['name']}")
+                
+        if db_changed:
+            db.commit()
+            
+        # Always sync latest products back to products.json
+        sync_products_to_file(db)
             
         # Also seed default users if users table is empty
         user_exists = db.execute(select(models.User)).scalars().first()
@@ -155,7 +329,7 @@ def startup_event():
                             new_usr = models.User(
                                 username=u.get("username"),
                                 email=u.get("email"),
-                                hashed_password=hash_password("MaaBankeswari@2026"), # Set a secure default passcode
+                                hashed_password=hash_password(os.getenv("ADMIN_PASSWORD", "MaaBankeswariChangeMe")), # Set a secure default passcode
                                 fullname=u.get("fullname"),
                                 phone_number=u.get("phone_number", "")
                             )
@@ -182,6 +356,17 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if request.url.path.startswith("/api/"):
+        headers = {}
+        # Preserve custom headers like Retry-After if present in the exception
+        if hasattr(exc, "headers") and exc.headers:
+            headers.update(exc.headers)
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+            headers=headers
+        )
+
     title = f"Oops! Error {exc.status_code}"
     message = exc.detail
     
@@ -206,6 +391,11 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     print(f"[UNHANDLED EXCEPTION]: {str(exc)}")
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error"}
+        )
     return templates.TemplateResponse(
         request=request,
         name="error.html",
@@ -222,27 +412,19 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 def get_settings():
     settings = load_settings()
     
-    # Mask Gemini API Key
-    masked_gemini_key = ""
-    raw_gemini_key = settings.get("gemini_api_key", "")
-    if raw_gemini_key:
-        if len(raw_gemini_key) > 8:
-            masked_gemini_key = f"{raw_gemini_key[:4]}...{raw_gemini_key[-4:]}"
-        else:
-            masked_gemini_key = "****"
-            
-    # Mask Google Maps API Key
-    masked_maps_key = ""
-    raw_maps_key = settings.get("google_maps_api_key", "")
-    if raw_maps_key:
-        if len(raw_maps_key) > 8:
-            masked_maps_key = f"{raw_maps_key[:4]}...{raw_maps_key[-4:]}"
-        else:
-            masked_maps_key = "****"
-            
+    # Note: GEMINI_API_KEY is a backend secret and must never be returned to the client in API responses.
+    # We only return a configuration status boolean.
+    gemini_configured = bool(settings.get("gemini_api_key", "").strip())
+    
+    # Note: GOOGLE_MAPS_API_KEY is a public API key used client-side for rendering maps,
+    # so it is intentionally returned in this API response.
+    google_maps_key = settings.get("google_maps_api_key", "")
+    
+    # Note: STORE_UPI_ID and DELIVERY_AGENT_PHONE are public/merchant settings 
+    # intentionally exposed to checkout and tracking interfaces.
     return {
-        "gemini_api_key": masked_gemini_key,
-        "google_maps_api_key": masked_maps_key,
+        "gemini_api_key_configured": gemini_configured,
+        "google_maps_api_key": google_maps_key,
         "ai_verification_enabled": settings.get("ai_verification_enabled", True),
         "store_upi_id": settings.get("store_upi_id", "9078445116@ybl"),
         "delivery_agent_phone": settings.get("delivery_agent_phone", ""),
@@ -251,6 +433,7 @@ def get_settings():
 
 @app.post("/api/settings")
 def update_settings(settings_data: SettingsUpdate):
+    # Only save non-sensitive, public toggles to settings.json
     success = save_settings(settings_data.dict(exclude_unset=True))
     if not success:
         raise HTTPException(status_code=500, detail="Failed to save settings!")
@@ -799,6 +982,18 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
+class AdminAuthRequest(BaseModel):
+    password: str
+
+@app.post("/api/admin/authenticate")
+def authenticate_admin(auth_data: AdminAuthRequest):
+    # Retrieve the admin security key/password from environment variables.
+    admin_password = os.getenv("ADMIN_PASSWORD", "MaaBankeswariChangeMe")
+    if auth_data.password == admin_password:
+        return {"authenticated": True}
+    raise HTTPException(status_code=401, detail="Invalid security key!")
+
+
 @app.post("/api/login", response_model=UserResponse)
 def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
     user = db.execute(select(models.User).where(models.User.username == login_data.username)).scalars().first()
@@ -891,6 +1086,7 @@ class ChatMessage(BaseModel):
 class ChatbotInput(BaseModel):
     message: str
     history: list[ChatMessage] = []
+    user_id: Optional[int] = None
 
 def get_products_context(db: Session) -> str:
     result = db.execute(select(models.Product))

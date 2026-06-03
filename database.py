@@ -1,7 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./shop.db"
+import os
+from data.settings_manager import load_env_file
+
+load_env_file()
+
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./shop.db")
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,

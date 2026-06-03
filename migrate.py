@@ -8,8 +8,16 @@ Usage:
 """
 
 import sqlite3
+import os
+from data.settings_manager import load_env_file
 
-DB_PATH = "./shop.db"
+load_env_file()
+
+db_url = os.getenv("DATABASE_URL", "sqlite:///./shop.db")
+if db_url.startswith("sqlite:///"):
+    DB_PATH = db_url.replace("sqlite:///", "")
+else:
+    DB_PATH = "./shop.db"
 
 MIGRATIONS = [
     # Add user_id to orders (missing from initial schema)

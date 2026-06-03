@@ -860,8 +860,35 @@
         </section>
         
         <!-- Inject script-level Google Maps Key variable -->
+        <!-- Note: The Google Maps API Key is a public key intentionally exposed client-side for maps library initialization. -->
         <script>
             window.GOOGLE_MAPS_API_KEY = "{{ google_maps_api_key }}";
+
+            // Global Fetch Interceptor to catch 429 Rate Limit responses and display a toast alert.
+            (function() {
+                const originalFetch = window.fetch;
+                window.fetch = async function(...args) {
+                    try {
+                        const response = await originalFetch(...args);
+                        if (response.status === 429) {
+                            const retryAfter = response.headers.get("Retry-After") || response.headers.get("retry-after");
+                            let message = "Too many requests. Please slow down!";
+                            if (retryAfter) {
+                                message = `Rate limit exceeded. Please retry after ${retryAfter} seconds.`;
+                            }
+                            
+                            if (typeof showToast === "function") {
+                                showToast(message, false);
+                            } else {
+                                alert(message);
+                            }
+                        }
+                        return response;
+                    } catch (error) {
+                        throw error;
+                    }
+                };
+            })();
         </script>
         
         <!-- Load Leaflet inside admin in case of fallback -->
@@ -1004,9 +1031,17 @@
 
             function handleAuthSubmit() {
                 const enteredVal = pwdInput ? pwdInput.value : "";
-                const securityKey = "MaaBankeswari@2026"; // Secure shopkeeper password
                 
-                if (enteredVal === securityKey) {
+                fetch("/api/admin/authenticate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ password: enteredVal })
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error("Invalid Security Key");
+                    return res.json();
+                })
+                .then(data => {
                     sessionStorage.setItem("admin_authenticated", "true");
                     if (lockScreen) {
                         lockScreen.style.opacity = "0";
@@ -1015,11 +1050,12 @@
                         }, 400);
                     }
                     showToast("Authentication successful! Welcome operator. 🌾");
-                } else {
+                })
+                .catch(err => {
                     if (errorMsg) errorMsg.style.display = "block";
                     if (pwdInput) pwdInput.value = "";
                     playChime("reject");
-                }
+                });
             }
 
             if (submitBtn) {
@@ -2233,17 +2269,50 @@
                     return res.json();
                 })
                 .then(data => {
-                    if (geminiKeyInput && data.gemini_api_key) {
-                        geminiKeyInput.value = data.gemini_api_key;
+                    if (geminiKeyInput) {
+                        if (data.gemini_api_key_configured) {
+                            geminiKeyInput.value = "••••••••••••••••";
+                            geminiKeyInput.disabled = true;
+                            geminiKeyInput.placeholder = "Configured securely in .env";
+                        } else {
+                            geminiKeyInput.value = "";
+                            geminiKeyInput.disabled = true;
+                            geminiKeyInput.placeholder = "Not configured. Set GEMINI_API_KEY in .env";
+                        }
                     }
-                    if (mapsKeyInput && data.google_maps_api_key) {
-                        mapsKeyInput.value = data.google_maps_api_key;
+                    if (mapsKeyInput) {
+                        if (data.google_maps_api_key) {
+                            mapsKeyInput.value = data.google_maps_api_key;
+                            mapsKeyInput.disabled = true;
+                            mapsKeyInput.placeholder = "Configured securely in .env";
+                        } else {
+                            mapsKeyInput.value = "";
+                            mapsKeyInput.disabled = true;
+                            mapsKeyInput.placeholder = "Not configured. Set GOOGLE_MAPS_API_KEY in .env";
+                        }
                     }
-                    if (document.getElementById("store-upi-input") && data.store_upi_id) {
-                        document.getElementById("store-upi-input").value = data.store_upi_id;
+                    if (document.getElementById("store-upi-input")) {
+                        const upiInput = document.getElementById("store-upi-input");
+                        if (data.store_upi_id) {
+                            upiInput.value = data.store_upi_id;
+                            upiInput.disabled = true;
+                            upiInput.placeholder = "Configured securely in .env";
+                        } else {
+                            upiInput.value = "";
+                            upiInput.disabled = true;
+                            upiInput.placeholder = "Not configured. Set STORE_UPI_ID in .env";
+                        }
                     }
-                    if (deliveryAgentPhoneInput && data.delivery_agent_phone) {
-                        deliveryAgentPhoneInput.value = data.delivery_agent_phone;
+                    if (deliveryAgentPhoneInput) {
+                        if (data.delivery_agent_phone) {
+                            deliveryAgentPhoneInput.value = data.delivery_agent_phone;
+                            deliveryAgentPhoneInput.disabled = true;
+                            deliveryAgentPhoneInput.placeholder = "Configured securely in .env";
+                        } else {
+                            deliveryAgentPhoneInput.value = "";
+                            deliveryAgentPhoneInput.disabled = true;
+                            deliveryAgentPhoneInput.placeholder = "Not configured. Set DELIVERY_AGENT_PHONE in .env";
+                        }
                     }
                     if (showAgentPhoneToggle) {
                         showAgentPhoneToggle.checked = data.show_agent_phone_to_customer;
@@ -2251,7 +2320,7 @@
                     if (aiVerificationToggle) {
                         aiVerificationToggle.checked = data.ai_verification_enabled;
                     }
-                    updateStatusIndicator(data.gemini_api_key !== "", data.ai_verification_enabled);
+                    updateStatusIndicator(data.gemini_api_key_configured, data.ai_verification_enabled);
                 })
                 .catch(err => {
                     console.error("Error loading system settings:", err);
