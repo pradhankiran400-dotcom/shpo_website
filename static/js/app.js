@@ -3131,6 +3131,30 @@ document.addEventListener("DOMContentLoaded", () => {
         if (carouselContainer) {
             carouselContainer.addEventListener("mouseenter", stopCarouselAutoPlay);
             carouselContainer.addEventListener("mouseleave", startCarouselAutoPlay);
+
+            // Touch swipe gestures support for mobile devices
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            const handleCarouselSwipeGesture = () => {
+                const swipeThreshold = 50; // minimum distance in pixels
+                if (touchEndX < touchStartX - swipeThreshold) {
+                    nextSlide();
+                    startCarouselAutoPlay();
+                } else if (touchEndX > touchStartX + swipeThreshold) {
+                    prevSlide();
+                    startCarouselAutoPlay();
+                }
+            };
+
+            carouselContainer.addEventListener("touchstart", (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            carouselContainer.addEventListener("touchend", (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleCarouselSwipeGesture();
+            }, { passive: true });
         }
     }
 

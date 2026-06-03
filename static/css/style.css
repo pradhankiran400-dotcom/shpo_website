@@ -1956,9 +1956,50 @@ html.dark-theme .typing-indicator-bubble span {
 }
 
 @media (max-width: 768px) {
+    .carousel-container {
+        min-height: 420px;
+    }
     .carousel-slide {
-        padding: 40px 24px;
+        padding: 40px 32px 56px 32px;
         text-align: center;
+    }
+    .carousel-slide .hero-content {
+        width: 100%;
+        margin: 0 auto;
+    }
+    .carousel-slide .hero-features {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .carousel-container {
+        min-height: 480px;
+    }
+    .carousel-slide {
+        padding: 32px 16px 48px 16px;
+    }
+    .carousel-slide .hero-subtitle {
+        font-size: 0.75rem;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+    }
+    .carousel-slide .hero-title {
+        font-size: 1.6rem;
+    }
+    .carousel-slide .hero-description {
+        font-size: 0.85rem;
+        margin-bottom: 20px;
+    }
+    .carousel-slide .hero-features {
+        gap: 8px;
+    }
+    .carousel-slide .feature-tag {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+    .carousel-btn {
+        display: none;
     }
 }
 
