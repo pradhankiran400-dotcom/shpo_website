@@ -74,7 +74,9 @@ def sync_orders_to_file(db: Session):
                 "order_status": order.order_status,
                 "receipt_image_url": order.receipt_image_url,
                 "phone_number": order.phone_number,
-                "ai_forensics_json": order.ai_forensics_json
+                "ai_forensics_json": order.ai_forensics_json,
+                "delivery_lat": order.delivery_lat,
+                "delivery_lng": order.delivery_lng
             })
         with open("orders.json", "w", encoding="utf-8") as f:
             json.dump(orders_list, f, indent=4, ensure_ascii=False)
@@ -393,6 +395,14 @@ def analyze_receipt_with_gemini(image_path: str, api_key: str) -> dict:
 
 @app.post("/api/orders/", response_model=OrderResponse)
 def create_new_order(order_data: OrderCreate, db: Session = Depends(get_db)):
+    if not order_data.user_id:
+        raise HTTPException(status_code=401, detail="Please sign in or register to place your order! 🌾")
+    
+    # Verify user exists in the database
+    user = db.execute(select(models.User).where(models.User.id == order_data.user_id)).scalars().first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid user session. Please sign in or register to place your order! 🌾")
+
     # ----------------------------------------------------
     # LOCAL PYTHON OCR RECEIPT AMOUNT VALIDATION
     # ----------------------------------------------------
@@ -689,7 +699,9 @@ def create_new_order(order_data: OrderCreate, db: Session = Depends(get_db)):
         order_status=order_data.order_status,
         receipt_image_url=order_data.receipt_image_url,
         phone_number=order_data.phone_number,
-        ai_forensics_json=ai_forensics_json_str
+        ai_forensics_json=ai_forensics_json_str,
+        delivery_lat=order_data.delivery_lat,
+        delivery_lng=order_data.delivery_lng
     )
     db.add(new_order)
     db.commit()
@@ -832,6 +844,97 @@ def get_admin_dashboard(request: Request):
         name="admin.html",
         context={"shop_name": "Maa Bankeswari Rice Store - Admin Dashboard"}
     )
+
+
+class ChatMessage(BaseModel):
+    role: str
+    parts: str
+
+class ChatbotInput(BaseModel):
+    message: str
+    history: list[ChatMessage] = []
+
+def get_products_context(db: Session) -> str:
+    result = db.execute(select(models.Product))
+    products = result.scalars().all()
+    lines = []
+    for p in products:
+        stock_status = "In Stock" if p.in_stock else "Out of Stock"
+        badge_str = f" ({p.badge})" if p.badge else ""
+        lines.append(f"- {p.name}{badge_str}: ₹{p.price} per {p.unit} ({stock_status}) - {p.description}")
+    return "\n".join(lines)
+
+@app.post("/api/chatbot")
+def chatbot_endpoint(chat_input: ChatbotInput, db: Session = Depends(get_db)):
+    api_key = get_effective_gemini_key()
+    if not api_key:
+        raise HTTPException(status_code=400, detail="Gemini API key not configured.")
+        
+    products_context = get_products_context(db)
+    
+    system_prompt = (
+        "You are Laxmi, the friendly, helpful, and smart store assistant for 'Maa Bankeswari Rice Store'. "
+        "Your goal is to guide customers, help them choose the perfect grains/dals, explain the ordering process, "
+        "and provide accurate store details.\n\n"
+        "Store Information:\n"
+        "- Name: Maa Bankeswari Rice Store\n"
+        "- Location: Indradhanu Market, IRC Village, Nayapalli, Bhubaneswar, Odisha 751015\n"
+        "- Contact: +91 9776400523 (Call) / +91 9078445116 (WhatsApp)\n"
+        "- Delivery Charge: ₹2.00 per kilometer (Calculated dynamically using Leaflet Map at checkout, max 20 km radius)\n"
+        "- Payment Options: Cash on Delivery (COD) and UPI Online Payment. If UPI is selected, the customer scans the dynamic QR code and uploads a receipt screenshot. Our AI scanner verifies the receipt for authenticity and matches the order amount to prevent fraud.\n"
+        "- Ordering Process: 1. Add items to cart. 2. Click 'My Cart' at the top right. 3. Click 'Proceed to Checkout'. 4. Pin delivery location on the Map. 5. Choose Payment Method (UPI/COD). 6. Click 'Verify & Place Order'.\n\n"
+        "Here is the list of products currently available in our database:\n"
+        f"{products_context}\n\n"
+        "Instructions:\n"
+        "1. Keep your answers concise, sweet, and helpful. Use polite greetings (e.g. Namaste! 🙏).\n"
+        "2. Bold key terms using standard markdown (e.g. **basmati rice**).\n"
+        "3. If a product is not in the list, politely say we don't stock it currently, but recommend the closest alternative.\n"
+        "4. Be ready to answer questions about grain selection, cooking tips, or store policies.\n"
+        "5. Respond in clear, readable language. Do NOT use overly formal or robotic words."
+    )
+    
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    headers = {"Content-Type": "application/json"}
+    
+    # Format contents for Gemini API (user/model turn structure)
+    contents = []
+    # Add history
+    for item in chat_input.history:
+        role = "user" if item.role == "user" else "model"
+        contents.append({
+            "role": role,
+            "parts": [{"text": item.parts}]
+        })
+    # Add current message
+    contents.append({
+        "role": "user",
+        "parts": [{"text": chat_input.message}]
+    })
+    
+    payload = {
+        "contents": contents,
+        "systemInstruction": {
+            "parts": [{"text": system_prompt}]
+        },
+        "generationConfig": {
+            "temperature": 0.7,
+            "maxOutputTokens": 350
+        }
+    }
+    
+    try:
+        response_bytes = make_http_post(url, payload, headers)
+        response_json = json.loads(response_bytes.decode("utf-8"))
+        
+        if "error" in response_json:
+            raise Exception(response_json["error"].get("message", "Unknown error"))
+            
+        candidate = response_json["candidates"][0]
+        reply = candidate["content"]["parts"][0]["text"]
+        return {"reply": reply}
+    except Exception as e:
+        print(f"[CHATBOT API ERROR]: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 

@@ -59,6 +59,8 @@ class OrderCreate(BaseModel):
     receipt_image_url: Optional[str] = None
     phone_number: Optional[str] = ""
     ai_forensics_json: Optional[str] = None
+    delivery_lat: Optional[float] = None
+    delivery_lng: Optional[float] = None
 
 class OrderResponse(OrderCreate):
     id: int

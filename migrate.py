@@ -72,6 +72,18 @@ MIGRATIONS = [
         "sql":   "ALTER TABLE orders ADD COLUMN ai_forensics_json TEXT",
         "label": "orders.ai_forensics_json"
     },
+    # Add delivery_lat to orders
+    {
+        "check": "SELECT COUNT(*) FROM pragma_table_info('orders') WHERE name='delivery_lat'",
+        "sql":   "ALTER TABLE orders ADD COLUMN delivery_lat REAL",
+        "label": "orders.delivery_lat"
+    },
+    # Add delivery_lng to orders
+    {
+        "check": "SELECT COUNT(*) FROM pragma_table_info('orders') WHERE name='delivery_lng'",
+        "sql":   "ALTER TABLE orders ADD COLUMN delivery_lng REAL",
+        "label": "orders.delivery_lng"
+    },
 ]
 
 def run_migrations():

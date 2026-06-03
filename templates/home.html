@@ -666,6 +666,90 @@
         </div>
     </div>
 
+    <!-- Real-Time Order Tracking Modal -->
+    <div class="modal-overlay" id="tracking-modal">
+        <div class="modal-content" style="max-width: 500px; padding: 28px; text-align: left; position: relative; overflow: hidden; border: 1.5px solid rgba(45, 106, 79, 0.15); box-shadow: var(--shadow-lg);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1.5px solid rgba(27,67,50,0.08); padding-bottom: 12px;">
+                <h3 style="font-family: var(--font-heading); color: var(--primary-dark); font-size: 1.5rem; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    🛵 Live Delivery Tracking
+                </h3>
+                <button id="close-tracking-modal" style="background: transparent; border: none; color: var(--text-light); cursor: pointer; padding: 6px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: var(--transition-fast);">
+                    <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                </button>
+            </div>
+            
+            <div style="margin-bottom: 16px; font-size: 0.92rem; color: var(--text-medium); font-weight: 600; display: flex; align-items: center; justify-content: space-between;">
+                <span>Order <span id="tracking-order-id" style="color: var(--primary); font-weight: 800;">#0</span></span>
+                <span id="tracking-status-badge" style="background-color: var(--primary-ultra-light); color: var(--primary); padding: 4px 10px; border-radius: var(--radius-xl); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; border: 1px solid rgba(45,106,79,0.15);">Preparing</span>
+            </div>
+
+            <!-- Live Tracking Map Container -->
+            <div id="tracking-map" style="width: 100%; height: 240px; border-radius: var(--radius-md); margin-bottom: 16px; border: 1.5px solid rgba(27,67,50,0.12); box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); position: relative; z-index: 1;"></div>
+
+            <!-- Delivery Progress details -->
+            <div style="background-color: var(--primary-ultra-light); border: 1.5px solid rgba(46,125,50,0.12); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px; box-shadow: var(--shadow-sm);">
+                <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--primary-dark); margin-bottom: 8px;">
+                    <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="user" style="width: 14px; height: 14px; color: var(--primary-light);"></i> Delivery Agent:</span>
+                    <strong style="font-weight: 700;">Ramesh Kumar</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--primary-dark); margin-bottom: 8px;">
+                    <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="map-pin" style="width: 14px; height: 14px; color: var(--primary-light);"></i> Distance Remaining:</span>
+                    <strong id="tracking-distance-val" style="font-weight: 700;">Calculating...</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--primary-dark); margin-bottom: 12px;">
+                    <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="clock" style="width: 14px; height: 14px; color: var(--primary-light);"></i> Estimated ETA:</span>
+                    <strong id="tracking-eta-val" style="color: var(--success); font-weight: 800;">Calculating...</strong>
+                </div>
+                <!-- Dynamic progress bar -->
+                <div style="width: 100%; height: 8px; background-color: rgba(27, 67, 50, 0.1); border-radius: 4px; overflow: hidden; position: relative;">
+                    <div id="tracking-progress-bar" style="width: 0%; height: 100%; background-color: var(--primary); border-radius: 4px; transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+
+            <!-- Status Timeline -->
+            <div style="display: flex; flex-direction: column; gap: 14px; padding-left: 8px; position: relative;" class="tracking-timeline">
+                <!-- Line behind dots -->
+                <div style="position: absolute; left: 13px; top: 8px; bottom: 8px; width: 2px; background-color: rgba(27, 67, 50, 0.1); z-index: 1;"></div>
+                
+                <div style="display: flex; gap: 14px; align-items: center; position: relative; z-index: 2;" id="tracking-step-1">
+                    <div class="timeline-dot" style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--text-light); border: 2px solid var(--white); box-shadow: 0 0 0 2px var(--text-light); margin-left: 8px; transition: var(--transition-fast);"></div>
+                    <span style="color: var(--text-medium); font-weight: 600; transition: var(--transition-fast);">Order Confirmed by Admin</span>
+                </div>
+                <div style="display: flex; gap: 14px; align-items: center; position: relative; z-index: 2;" id="tracking-step-2">
+                    <div class="timeline-dot" style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--text-light); border: 2px solid var(--white); box-shadow: 0 0 0 2px var(--text-light); margin-left: 8px; transition: var(--transition-fast);"></div>
+                    <span style="color: var(--text-medium); transition: var(--transition-fast);">Packed & Dispatched from Store</span>
+                </div>
+                <div style="display: flex; gap: 14px; align-items: center; position: relative; z-index: 2;" id="tracking-step-3">
+                    <div class="timeline-dot" style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--text-light); border: 2px solid var(--white); box-shadow: 0 0 0 2px var(--text-light); margin-left: 8px; transition: var(--transition-fast);"></div>
+                    <span style="color: var(--text-medium); transition: var(--transition-fast);">Delivery Boy Out for Delivery</span>
+                </div>
+                <div style="display: flex; gap: 14px; align-items: center; position: relative; z-index: 2;" id="tracking-step-4">
+                    <div class="timeline-dot" style="width: 12px; height: 12px; border-radius: 50%; background-color: var(--text-light); border: 2px solid var(--white); box-shadow: 0 0 0 2px var(--text-light); margin-left: 8px; transition: var(--transition-fast);"></div>
+                    <span style="color: var(--text-medium); transition: var(--transition-fast);">Arrived at Your Location</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .tracking-timeline .step-active .timeline-dot {
+            background-color: var(--success) !important;
+            box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.3) !important;
+        }
+        .tracking-timeline .step-active span {
+            color: var(--primary-dark) !important;
+            font-weight: 700 !important;
+        }
+        .tracking-timeline .step-done .timeline-dot {
+            background-color: var(--primary) !important;
+            box-shadow: 0 0 0 2px var(--primary) !important;
+        }
+        .tracking-timeline .step-done span {
+            color: var(--text-medium) !important;
+            font-weight: 600 !important;
+        }
+    </style>
+
     <!-- Profile & Order History Drawer (Slides in from right) -->
     <div class="cart-drawer-overlay" id="profile-overlay"></div>
     <div class="cart-drawer" id="profile-drawer">
@@ -776,7 +860,7 @@
                 <p><i data-lucide="mail"></i> info@maabankeswariricestore.com</p>
                 <p>
                     <a href="https://maps.app.goo.gl/j1gMcbk35XPBAseZA" target="_blank"
-                        style="color: #3550ea; font-weight: 500; text-decoration: none;">
+                        style="color: var(--accent); font-weight: 700; text-decoration: none; transition: var(--transition-fast);">
                         📍Open in Google Maps
                     </a>
                 </p>

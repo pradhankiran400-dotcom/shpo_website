@@ -51,3 +51,5 @@ class Order(Base):
     receipt_image_url = Column(String, nullable=True)
     phone_number = Column(String, default="")
     ai_forensics_json = Column(String, nullable=True)
+    delivery_lat = Column(Float, nullable=True)
+    delivery_lng = Column(Float, nullable=True)

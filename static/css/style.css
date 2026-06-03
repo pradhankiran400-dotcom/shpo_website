@@ -1207,7 +1207,7 @@ body {
 
 /* Premium Footer */
 .footer {
-    background-color: var(--primary-dark);
+    background-color: #081c15;
     color: rgba(255, 255, 255, 0.7);
     padding: 64px 24px 24px 24px;
     margin-top: 80px;
@@ -1227,7 +1227,7 @@ body {
 .footer-brand .footer-logo {
     font-family: var(--font-heading);
     font-size: 1.6rem;
-    color: var(--white);
+    color: #ffffff;
     margin-bottom: 16px;
     font-weight: 700;
 }
@@ -1239,7 +1239,7 @@ body {
 
 .footer-links h6,
 .footer-contact h6 {
-    color: var(--white);
+    color: #ffffff;
     font-size: 1.05rem;
     font-weight: 700;
     margin-bottom: 20px;
